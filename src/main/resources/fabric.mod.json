@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "itempuller",
+  "version": "${version}",
+  "name": "ItemPuller",
+  "description": "",
+  "authors": [],
+  "contact": {
+    "repo": "https://github.com/RetroTrack/ItemPuller"
+  },
+  "license": "MIT",
+  "icon": "assets/itempuller/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "com.retrotrack.itempuller.client.ItemPullerClient"
+    ],
+    "main": [
+      "com.retrotrack.itempuller.ItemPuller"
+    ]
+  },
+  "mixins": [
+    "itempuller.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
