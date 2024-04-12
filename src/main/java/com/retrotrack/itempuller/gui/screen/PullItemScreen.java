@@ -1,5 +1,7 @@
 package com.retrotrack.itempuller.gui.screen;
 
+import com.retrotrack.itempuller.util.decoding.DecodedChest;
+import com.retrotrack.itempuller.util.decoding.NbtChestCoder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.DrawContext;
@@ -7,6 +9,7 @@ import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
+import net.minecraft.item.Item;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
@@ -14,6 +17,8 @@ import net.minecraft.util.Identifier;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.retrotrack.itempuller.ItemPuller.MOD_ID;
 
@@ -27,6 +32,8 @@ public class PullItemScreen extends Screen {
     protected int TEXTURE_HEIGHT = 166;
 
     private TexturedButtonWidget pullButton;
+    private ArrayList<TexturedButtonWidget> chestsDisplayHovers = new ArrayList<>();
+    private ArrayList<Text> chestDisplayTexts = new ArrayList<>();
     private ArrayList<TexturedButtonWidget> itemSelectButtons = new ArrayList<>();
     private ArrayList<Boolean> itemSelectButtonSelected = new ArrayList<>();
     private ArrayList<Text> itemSelectTexts = new ArrayList<>();
@@ -34,10 +41,13 @@ public class PullItemScreen extends Screen {
     private int i;
     private int j;
     private int page = 0;
+    private final ArrayList<DecodedChest> decodedChests;
+    private boolean isChestDisplayAdded = false;
 
     public PullItemScreen(Screen parent, PacketByteBuf buf) {
         super(Text.literal(" "));
         this.parent = parent;
+        this.decodedChests = NbtChestCoder.decode(buf);
     }
 
     @Override
@@ -50,9 +60,11 @@ public class PullItemScreen extends Screen {
         super.init();
         this.i = (this.width - this.backgroundWidth) / 2;
         this.j = (this.height - this.backgroundHeight) / 2;
+        chestsDisplayHovers.clear();
         itemSelectButtons.clear();
         itemSelectButtonSelected.clear();
         itemSelectTexts.clear();
+        isChestDisplayAdded = false;
         this.addButtons();
         this.addChildren();
     }
@@ -71,8 +83,12 @@ public class PullItemScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
-        for (int k = 0; k < itemSelectTexts.size(); k++) {
-            context.drawTextWithShadow(textRenderer, itemSelectTexts.get(k), this.i + 7, this.height / 2 - (75 - 14 * k), 0xffffff);
+        IntStream.range(0, itemSelectTexts.size()).forEach(k -> context.drawTextWithShadow(textRenderer, itemSelectTexts.get(k), this.i + 7, this.height / 2 - (75 - 14 * k), 0xffffff));
+
+        IntStream.range(0, chestDisplayTexts.size()).forEach(k -> context.drawTextWithShadow(textRenderer, chestDisplayTexts.get(k), this.i + 105, this.height / 2 - (75 - 14 * k), 0xffffff));
+        if(!isChestDisplayAdded) {
+            chestsDisplayHovers.forEach(this::addDrawableChild);
+            isChestDisplayAdded = true;
         }
     }
 
@@ -80,6 +96,9 @@ public class PullItemScreen extends Screen {
         itemSelectButtons.forEach(this::addDrawableChild);
         this.addDrawableChild(pullButton);
 
+    }
+    private ArrayList<DecodedChest> hasChestItem(Item item) {
+        return decodedChests.stream().filter(chest -> chest.uniqueItems().contains(item)).collect(Collectors.toCollection(ArrayList::new));
     }
 
     private void addButtons() {
@@ -98,22 +117,35 @@ public class PullItemScreen extends Screen {
             itemSelectButtonSelected.add(false);
             if(!(k > 10) && k < Registries.ITEM.size() + 1) itemSelectTexts.add(Text.literal(StringUtils.abbreviate(Text.translatable(Registries.ITEM.get(k+1).getTranslationKey()).getString(), 16)));
         }
+    }
 
-        for (int k = 0; k < 12; k++) {
-            int finalK = k;
-            TexturedButtonWidget widget = new TexturedButtonWidget(this.i + 5, this.height / 2 - (78 - 14 * k), 88, (k>10) ? 2 : 14,
-                    new ButtonTextures(new Identifier(MOD_ID, "button/invisible/invisible"), new Identifier(MOD_ID, "button/invisible/invisible")),
-                    (button) -> setItemSelectButtonSelected(finalK));
-            widget.setTooltip(Tooltip.of(Text.translatable(Registries.ITEM.get(k+1).getTranslationKey())));
-            itemSelectButtons.add(widget);
-            itemSelectButtonSelected.add(false);
-            if(!(k > 10) && k < Registries.ITEM.size() + 1) itemSelectTexts.add(Text.literal(StringUtils.abbreviate(Text.translatable(Registries.ITEM.get(k+1).getTranslationKey()).getString(), 16)));
+    private void addChestDisplays(Item selectedItem) {
+
+        isChestDisplayAdded = false;
+        client.player.sendMessage(Text.literal(selectedItem.toString()));
+        chestsDisplayHovers.clear();
+        chestDisplayTexts.clear();
+        ArrayList<DecodedChest> chestsWithItem = hasChestItem(selectedItem);
+        for (int k = 0; k < chestsWithItem.size(); k++) {
+            if(k < 10) {
+                client.player.sendMessage(Text.literal(chestsWithItem.get(k).name()));
+                TexturedButtonWidget widget = new TexturedButtonWidget(
+                        this.i + 105, this.height / 2 - (78 - 14 * k), 65, 14,
+                        new ButtonTextures(new Identifier(MOD_ID, "button/invisible/invisible"),
+                                new Identifier(MOD_ID, "button/invisible/invisible")), a -> {
+                });
+                widget.setTooltip(Tooltip.of(Text.literal(chestsWithItem.get(k).name())));
+
+                chestsDisplayHovers.add(widget);
+                chestDisplayTexts.add(Text.literal(StringUtils.abbreviate(chestsWithItem.get(k).name(), 10)));
+            }
         }
     }
 
     private void setItemSelectButtonSelected(int id) {
         itemSelectButtons.get(id).active = false;
         itemSelectButtonSelected.set(id, true);
+        addChestDisplays(Registries.ITEM.get(id+1));
         for (int k = 0; k < itemSelectButtons.size(); k++) {
             if(itemSelectButtonSelected.get(k)){
                 itemSelectButtonSelected.set(k, false);
