@@ -19,7 +19,7 @@ public class CheckChestsC2SPacket {
                                PacketByteBuf buf, PacketSender responseSender) {
         server.execute(() -> {
             int radius = MathHelper.clamp(buf.getInt(0), 1, 128);
-            List<ChestBlockEntity> chestBlockEntityList = ChestFinder.findChestsAroundPlayer(player.getServerWorld(), player, radius); // Replace 128 with config value once done!
+            List<ChestBlockEntity> chestBlockEntityList = ChestFinder.findSortedChestsAroundPlayer(player.getServerWorld(), player, radius); // Replace 128 with config value once done!
             ServerPlayNetworking.send(player, ModMessages.OPEN_PULL_ITEM_SCREEN, NbtChestCoder.encode(chestBlockEntityList, player));
         });
 

@@ -2,18 +2,29 @@ package com.retrotrack.itempuller.util;
 
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class ChestFinder {
+
+    public static List<ChestBlockEntity> findSortedChestsAroundPlayer(ServerWorld world, ServerPlayerEntity player, int radius) {
+        return sortByDistance(findChestsAroundPlayer(world, player, radius), player);
+    }
+
+    public static ChestBlockEntity checkChestBlockEntity(ServerWorld world, BlockPos pos) {
+        BlockEntity blockEntity = world.getBlockEntity(pos);
+        if (!(blockEntity instanceof ChestBlockEntity)) return null;
+        if (((ChestBlockEntity) blockEntity).getLootTableId() != null) return null;
+        return ((ChestBlockEntity) blockEntity);
+    }
+
 
     public static List<ChestBlockEntity> findChestsAroundPlayer(ServerWorld world, ServerPlayerEntity player, int radius) {
         List<ChestBlockEntity> list = new ArrayList<>();
@@ -35,12 +46,21 @@ public class ChestFinder {
                         BlockPos chestPos = blockEntity.getPos();
                         // Check if the chest is within the radius
                         if (player.getBlockPos().getSquaredDistance(chestPos) <= radius * radius && ((ChestBlockEntity)blockEntity).getLootTableId() == null) {
-                            list.add((ChestBlockEntity) blockEntity);
+                            BlockPos connectedChest = ChestConnectionChecker.getConnectedChestPos(player, chestPos);
+                            if(connectedChest == null) list.add((ChestBlockEntity) blockEntity);
+                            else if(!list.contains((ChestBlockEntity) world.getBlockEntity(connectedChest)))list.add((ChestBlockEntity) blockEntity);
                         }
                     }
                 }
             }
         }
         return list;
+    }
+
+    public static List<ChestBlockEntity> sortByDistance(List<ChestBlockEntity> blockPosList, ServerPlayerEntity player) {
+        // Sort the blockPosList based on distance to the player
+        blockPosList.sort(Comparator.comparingDouble(pos -> pos.getPos().getSquaredDistance(player.getX(), player.getY(), player.getZ())));
+
+        return blockPosList;
     }
 }

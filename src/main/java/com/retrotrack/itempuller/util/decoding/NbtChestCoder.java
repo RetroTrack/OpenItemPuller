@@ -14,6 +14,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -105,16 +106,45 @@ public class NbtChestCoder {
 
             // Items
             int itemListSize = itemList.getInt("item_list_size");
-            ArrayList<Item> uniqueItems = new ArrayList<>();
-            ArrayList<Integer> itemCounts = new ArrayList<>();
+
+            HashMap<Item, Integer> map = new HashMap<>();
             for (int itemIndex = 0; itemIndex < itemListSize; itemIndex++) {
                 Item item = Registries.ITEM.get(new Identifier(itemList.getString("item_" + itemIndex)));
-                uniqueItems.add(item);
-                itemCounts.add(itemList.getInt("item_" + itemIndex + "_amount"));
+                map.put(item, itemList.getInt("item_" + itemIndex + "_amount"));
             }
 
-            decodedChests.add(new DecodedChest(chestName, pos, uniqueItems, itemCounts));
+            decodedChests.add(new DecodedChest(chestName, pos, map));
         }
         return decodedChests;
     }
+
+    public static ArrayList<DecodedChest> decode(NbtCompound nbtCompound) {
+        ArrayList<DecodedChest> decodedChests = new ArrayList<>();
+        if (nbtCompound == null) return decodedChests;
+
+        //Check chests
+        int chestListSize = nbtCompound.getInt("chest_list_size");
+        for (int chestIndex = 0; chestIndex < chestListSize; chestIndex++) {
+            // Nbt Compounds
+            NbtCompound chestNbt = nbtCompound.getCompound("chest_" + chestIndex);
+            NbtCompound itemList = chestNbt.getCompound("item_list");
+
+            // Chest
+            String chestName = chestNbt.getString("chest_name");
+            BlockPos pos = new BlockPos(chestNbt.getIntArray("pos")[0], chestNbt.getIntArray("pos")[1], chestNbt.getIntArray("pos")[2]);
+
+            // Items
+            int itemListSize = itemList.getInt("item_list_size");
+
+            HashMap<Item, Integer> map = new HashMap<>();
+            for (int itemIndex = 0; itemIndex < itemListSize; itemIndex++) {
+                Item item = Registries.ITEM.get(new Identifier(itemList.getString("item_" + itemIndex)));
+                map.put(item, itemList.getInt("item_" + itemIndex + "_amount"));
+            }
+
+            decodedChests.add(new DecodedChest(chestName, pos, map));
+        }
+        return decodedChests;
+    }
+
 }
