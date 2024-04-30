@@ -1,0 +1,45 @@
+package com.retrotrack.openitempuller.config;
+
+import com.google.gson.JsonObject;
+
+import java.util.Map;
+
+public record ItemPullerConfig2(Map<String, Object> properties) {
+
+
+    // Method to get the configuration in JSON format
+    public JsonObject getJsonFormat() {
+        JsonObject config = new JsonObject();
+        properties.forEach((key, value) -> {
+            if (value instanceof Number) {
+                config.addProperty(key, (Number) value);
+            } else if (value instanceof String) {
+                config.addProperty(key, (String) value);
+            } else if (value instanceof Character) {
+                config.addProperty(key, (Character) value);
+            }
+        });
+        return config;
+    }
+
+    public Number getDouble(String property) {
+        return Double.parseDouble(getClean(property));
+    }
+    public String getString(String property) {
+        return getClean(property);
+    }
+    public Boolean getBoolean(String property) {
+        return Boolean.parseBoolean(getClean(property));
+    }
+    public JsonObject getJsonObject(String property) {
+        return (JsonObject) getJsonFormat().get(property);
+    }
+    public Integer getInteger(String property) {
+        System.out.println(getClean("test: " + property));
+        return 1;//Integer.parseInt(getClean(property));
+    }
+    public String getClean(String property) {
+        System.out.println(getJsonFormat());
+        return getJsonFormat().get(property).toString().replaceAll("\"", "");
+    }
+}

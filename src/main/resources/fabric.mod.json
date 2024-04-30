@@ -1,26 +1,26 @@
 {
   "schemaVersion": 1,
-  "id": "itempuller",
+  "id": "open_item_puller",
   "version": "${version}",
-  "name": "ItemPuller",
-  "description": "",
+  "name": "OpenItemPuller",
+  "description": "Wondering where you left all those items? With OIP you'll find them in seconds!",
   "authors": [],
   "contact": {
-    "repo": "https://github.com/RetroTrack/ItemPuller"
+    "repo": "https://github.com/RetroTrack/OpenItemPuller"
   },
   "license": "MIT",
-  "icon": "assets/itempuller/icon.png",
+  "icon": "assets/openitempuller/icon.png",
   "environment": "*",
   "entrypoints": {
     "client": [
-      "com.retrotrack.itempuller.client.ItemPullerClient"
+      "com.retrotrack.openitempuller.client.ItemPullerClient"
     ],
     "main": [
-      "com.retrotrack.itempuller.ItemPuller"
+      "com.retrotrack.openitempuller.ItemPuller"
     ]
   },
   "mixins": [
-    "itempuller.mixins.json"
+    "openitempuller.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=${loader_version}",

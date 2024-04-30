@@ -1,0 +1,11 @@
+{
+  "open_item_puller.pull_screen.top_names": "Name            Total Count All",
+  "open_item_puller.pull_screen.pull_button": "Pull Items",
+  "open_item_puller.pull_screen.search": "Search...",
+  "open_item_puller.settings_screen.option_0": "Radius",
+  "open_item_puller.settings_screen.option_0.tooltip": "Server radius limit: %1$s",
+  "open_item_puller.settings_screen.option_1": "Priority type",
+  "open_item_puller.settings_screen.option_1.tooltip": "Way chest the chest list is displayed",
+  "open_item_puller.settings_screen.option_1.mode_0": "Range",
+  "open_item_puller.settings_screen.option_1.mode_1": "Item count"
+}

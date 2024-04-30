@@ -1,0 +1,16 @@
+package com.retrotrack.openitempuller.config;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class ConfigFactory {
+
+    public static ItemPullerConfig2 getDefaultConfig() {
+        Map<String, Object> properties = new HashMap<>();
+        //Config Variables
+        properties.put("radius", 128);
+        properties.put("priority_type", 0);
+
+        return new ItemPullerConfig2(properties);
+    }
+}
