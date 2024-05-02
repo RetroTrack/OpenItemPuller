@@ -1,7 +1,10 @@
 package com.retrotrack.openitempuller.util;
 
+import com.retrotrack.openitempuller.util.decoding.DecodedChest;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.LockableContainerBlockEntity;
 import net.minecraft.block.entity.LootableContainerBlockEntity;
+import net.minecraft.item.Item;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -14,20 +17,20 @@ import java.util.List;
 
 public class ChestFinder {
 
-    public static List<LootableContainerBlockEntity> findSortedLootableContainerBlockEntitiesAroundPlayer(ServerWorld world, ServerPlayerEntity player, int radius) {
+    public static List<LockableContainerBlockEntity> findSortedLootableContainerBlockEntitiesAroundPlayer(ServerWorld world, ServerPlayerEntity player, int radius) {
         return sortByDistance(findLootableContainerBlockEntitiesAroundPlayer(world, player, radius), player);
     }
 
-    public static LootableContainerBlockEntity checkLootableContainerBlockEntity(ServerWorld world, BlockPos pos) {
+    public static LockableContainerBlockEntity checkLockableContainerBlockEntity(ServerWorld world, BlockPos pos) {
         BlockEntity blockEntity = world.getBlockEntity(pos);
-        if (!(blockEntity instanceof LootableContainerBlockEntity)) return null;
-        if (((LootableContainerBlockEntity) blockEntity).getLootTableId() != null) return null;
-        return ((LootableContainerBlockEntity) blockEntity);
+        if (!(blockEntity instanceof LockableContainerBlockEntity)) return null;
+        if ((blockEntity instanceof LootableContainerBlockEntity) && ((LootableContainerBlockEntity) blockEntity).getLootTableId() != null) return null;
+        return ((LockableContainerBlockEntity) blockEntity);
     }
 
 
-    public static List<LootableContainerBlockEntity> findLootableContainerBlockEntitiesAroundPlayer(ServerWorld world, ServerPlayerEntity player, int radius) {
-        List<LootableContainerBlockEntity> list = new ArrayList<>();
+    public static List<LockableContainerBlockEntity> findLootableContainerBlockEntitiesAroundPlayer(ServerWorld world, ServerPlayerEntity player, int radius) {
+        List<LockableContainerBlockEntity> list = new ArrayList<>();
 
         // Calculate the chunk range based on the radius
         int chunkRadius = (int) Math.ceil((double) radius / 16);
@@ -47,8 +50,16 @@ public class ChestFinder {
                         // Check if the chest is within the radius
                         if (player.getBlockPos().getSquaredDistance(chestPos) <= radius * radius && ((LootableContainerBlockEntity)blockEntity).getLootTableId() == null) {
                             BlockPos connectedChest = ChestConnectionChecker.getConnectedChestPos(player, chestPos);
-                            if(connectedChest == null) list.add((LootableContainerBlockEntity) blockEntity);
-                            else if(!list.contains((LootableContainerBlockEntity) world.getBlockEntity(connectedChest)))list.add((LootableContainerBlockEntity) blockEntity);
+                            if(connectedChest == null) list.add((LockableContainerBlockEntity) blockEntity);
+                            else if(!list.contains((LockableContainerBlockEntity) world.getBlockEntity(connectedChest)))list.add((LockableContainerBlockEntity) blockEntity);
+                        }
+                    }else if (blockEntity instanceof LockableContainerBlockEntity) {
+                        BlockPos chestPos = blockEntity.getPos();
+                        // Check if the chest is within the radius
+                        if (player.getBlockPos().getSquaredDistance(chestPos) <= radius * radius) {
+                            BlockPos connectedChest = ChestConnectionChecker.getConnectedChestPos(player, chestPos);
+                            if(connectedChest == null) list.add((LockableContainerBlockEntity) blockEntity);
+                            else if(!list.contains((LockableContainerBlockEntity) world.getBlockEntity(connectedChest)))list.add((LockableContainerBlockEntity) blockEntity);
                         }
                     }
                 }
@@ -57,10 +68,15 @@ public class ChestFinder {
         return list;
     }
 
-    public static List<LootableContainerBlockEntity> sortByDistance(List<LootableContainerBlockEntity> blockPosList, ServerPlayerEntity player) {
+    public static List<LockableContainerBlockEntity> sortByDistance(List<LockableContainerBlockEntity> blockPosList, ServerPlayerEntity player) {
         // Sort the blockPosList based on distance to the player
         blockPosList.sort(Comparator.comparingDouble(pos -> pos.getPos().getSquaredDistance(player.getX(), player.getY(), player.getZ())));
 
         return blockPosList;
+    }
+    public static ArrayList<DecodedChest> sortByItemCount(ArrayList<DecodedChest> decodedChests, Item item) {
+        decodedChests.sort(Comparator.comparingInt(chest -> -chest.items().getOrDefault(item, 0)));
+        return decodedChests;
+
     }
 }

@@ -34,9 +34,9 @@ public class SettingsScreen extends Screen {
     protected int TEXTURE_HEIGHT = 182;
 
     private TexturedButtonWidget pullButton;
-    private ArrayList<Text> textWidgets = new ArrayList<>();
-    private ArrayList<TexturedButtonWidget> textHovers = new ArrayList<>();
-    private ArrayList<TextFieldWidget> textFieldWidgets = new ArrayList<>();
+    private final ArrayList<Text> textWidgets = new ArrayList<>();
+    private final ArrayList<TexturedButtonWidget> textHovers = new ArrayList<>();
+    private final ArrayList<TextFieldWidget> textFieldWidgets = new ArrayList<>();
 
     private int i;
     private int j;

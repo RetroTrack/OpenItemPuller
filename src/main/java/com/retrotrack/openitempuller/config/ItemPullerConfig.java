@@ -65,7 +65,7 @@ public class ItemPullerConfig {
     // Define the Config class
     public static class Config {
         // Use a map to store key-value pairs for properties
-        private Map<String, Object> properties;
+        private final Map<String, Object> properties;
 
         public Config() {
             properties = new HashMap<>();

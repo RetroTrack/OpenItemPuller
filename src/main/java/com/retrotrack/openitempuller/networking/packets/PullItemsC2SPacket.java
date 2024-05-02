@@ -3,7 +3,7 @@ package com.retrotrack.openitempuller.networking.packets;
 import com.retrotrack.openitempuller.util.ChestFinder;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.minecraft.block.entity.HopperBlockEntity;
-import net.minecraft.block.entity.LootableContainerBlockEntity;
+import net.minecraft.block.entity.LockableContainerBlockEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
@@ -27,7 +27,7 @@ public class PullItemsC2SPacket {
                     if (child == null) continue;
                     BlockPos pos = new BlockPos(child.getIntArray("pos")[0], child.getIntArray("pos")[1], child.getIntArray("pos")[2]);
 
-                    LootableContainerBlockEntity chestBlockEntity = ChestFinder.checkLootableContainerBlockEntity(player.getServerWorld(), pos);
+                    LockableContainerBlockEntity chestBlockEntity = ChestFinder.checkLockableContainerBlockEntity(player.getServerWorld(), pos);
                     if (chestBlockEntity == null) continue;
 
                     Inventory chestInventory = HopperBlockEntity.getInventoryAt(player.getServerWorld(), chestBlockEntity.getPos());

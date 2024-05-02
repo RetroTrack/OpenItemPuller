@@ -2,7 +2,7 @@ package com.retrotrack.openitempuller.util.decoding;
 
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.block.entity.HopperBlockEntity;
-import net.minecraft.block.entity.LootableContainerBlockEntity;
+import net.minecraft.block.entity.LockableContainerBlockEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.NbtCompound;
@@ -19,18 +19,18 @@ import java.util.stream.IntStream;
 
 public class NbtChestCoder {
     // Encodes chest data into a PacketByteBuf
-    public static PacketByteBuf encode(List<LootableContainerBlockEntity> lootableContainerBlockEntityList, ServerPlayerEntity player) {
+    public static PacketByteBuf encode(List<LockableContainerBlockEntity> lockableContainerBlockEntityList, ServerPlayerEntity player) {
         // Create a new PacketByteBuf to store the encoded data
         PacketByteBuf buf = PacketByteBufs.create();
         // Create a NbtCompound to hold the encoded data
         NbtCompound nbtCompound = new NbtCompound();
 
         // Write the size of the chest block entity list to the compound
-        nbtCompound.putInt("chest_list_size", lootableContainerBlockEntityList.size());
+        nbtCompound.putInt("chest_list_size", lockableContainerBlockEntityList.size());
 
         // Iterate through each chest block entity in the list
-        for (int chestIndex = 0; chestIndex < lootableContainerBlockEntityList.size(); chestIndex++) {
-            LootableContainerBlockEntity chestBlockEntity = lootableContainerBlockEntityList.get(chestIndex);
+        for (int chestIndex = 0; chestIndex < lockableContainerBlockEntityList.size(); chestIndex++) {
+            LockableContainerBlockEntity chestBlockEntity = lockableContainerBlockEntityList.get(chestIndex);
             // Get the inventory of the chest
             Inventory chestInventory = HopperBlockEntity.getInventoryAt(player.getServerWorld(), chestBlockEntity.getPos());
 
@@ -85,36 +85,6 @@ public class NbtChestCoder {
         // Write the main compound to the PacketByteBuf and return buf
         buf.writeNbt(nbtCompound);
         return buf;
-    }
-
-    public static ArrayList<DecodedChest> decode(PacketByteBuf buf) {
-        ArrayList<DecodedChest> decodedChests = new ArrayList<>();
-        NbtCompound nbtCompound = buf.readNbt();
-        if (nbtCompound == null) return decodedChests;
-
-        //Check chests
-        int chestListSize = nbtCompound.getInt("chest_list_size");
-        for (int chestIndex = 0; chestIndex < chestListSize; chestIndex++) {
-            // Nbt Compounds
-            NbtCompound chestNbt = nbtCompound.getCompound("chest_" + chestIndex);
-            NbtCompound itemList = chestNbt.getCompound("item_list");
-
-            // Chest
-            String chestName = chestNbt.getString("chest_name");
-            BlockPos pos = new BlockPos(chestNbt.getIntArray("pos")[0], chestNbt.getIntArray("pos")[1], chestNbt.getIntArray("pos")[2]);
-
-            // Items
-            int itemListSize = itemList.getInt("item_list_size");
-
-            HashMap<Item, Integer> map = new HashMap<>();
-            for (int itemIndex = 0; itemIndex < itemListSize; itemIndex++) {
-                Item item = Registries.ITEM.get(new Identifier(itemList.getString("item_" + itemIndex)));
-                map.put(item, itemList.getInt("item_" + itemIndex + "_amount"));
-            }
-
-            decodedChests.add(new DecodedChest(chestName, pos, map));
-        }
-        return decodedChests;
     }
 
     public static ArrayList<DecodedChest> decode(NbtCompound nbtCompound) {

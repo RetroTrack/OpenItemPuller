@@ -23,14 +23,11 @@ public class IPCheckboxWidget extends PressableWidget {
     private static final Identifier SELECTED_TEXTURE = new Identifier("widget/checkbox_selected");
     private static final Identifier HIGHLIGHTED_TEXTURE = new Identifier("widget/checkbox_highlighted");
     private static final Identifier TEXTURE = new Identifier("widget/checkbox");
-    private static final int TEXT_COLOR = 14737632;
-    private static final int field_47105 = 4;
-    private static final int field_47106 = 8;
     private boolean checked;
     private final IPCheckboxWidget.Callback callback;
 
     IPCheckboxWidget(int x, int y, Text message, TextRenderer textRenderer, boolean checked, IPCheckboxWidget.Callback callback) {
-        super(x, y, getSize(textRenderer) + 4 + textRenderer.getWidth(message), getSize(textRenderer), message);
+        super(x, y, getSize() + 4 + textRenderer.getWidth(message), getSize(), message);
         this.checked = checked;
         this.callback = callback;
     }
@@ -40,7 +37,7 @@ public class IPCheckboxWidget extends PressableWidget {
         return new Builder(text, textRenderer);
     }
 
-    private static int getSize(TextRenderer textRenderer) {
+    private static int getSize() {
         return 12;
     }
 
@@ -80,7 +77,7 @@ public class IPCheckboxWidget extends PressableWidget {
             identifier = this.isFocused() ? HIGHLIGHTED_TEXTURE : TEXTURE;
         }
 
-        int i = getSize(textRenderer);
+        int i = getSize();
         int j = this.getX() + i + 4;
         int k = this.getY() + (this.height >> 1) - (9 >> 1);
         context.drawGuiTexture(identifier, this.getX(), this.getY(), i, i);

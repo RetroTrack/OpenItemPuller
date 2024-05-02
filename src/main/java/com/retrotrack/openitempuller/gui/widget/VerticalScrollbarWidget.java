@@ -10,10 +10,12 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 
+import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
+
 @Environment(EnvType.CLIENT)
 public class VerticalScrollbarWidget extends ClickableWidget {
 
-    private static final Identifier TEXTURE = new Identifier("textures/gui/sprites/container/creative_inventory/scroller.png");
+    private static final Identifier TEXTURE = new Identifier(MOD_ID, "textures/gui/sprites/button/scrollbar/scrollbar.png");
 
     private final int x;
     private final int y;
@@ -21,7 +23,6 @@ public class VerticalScrollbarWidget extends ClickableWidget {
     private final int scrollHeight;
     public double scrollPos;
     private final Callback callback;
-    private double lastX;
 
     public VerticalScrollbarWidget(int x, int y, int width, int height,int scrollHeight , Text message, Callback callback) {
         super(x, y, width, height, message);
@@ -35,7 +36,7 @@ public class VerticalScrollbarWidget extends ClickableWidget {
 
     @Override
     protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.drawTexture(TEXTURE, this.x, this.y + (int) ((float) scrollPos / scrollHeight * height), 0, 0, 7, 15, 12, 15);
+        context.drawTexture(TEXTURE, this.x, this.y + (int) ((float) scrollPos / scrollHeight * height), 0, 0, 7, 15, 7, 15);
 
     }
     @Override

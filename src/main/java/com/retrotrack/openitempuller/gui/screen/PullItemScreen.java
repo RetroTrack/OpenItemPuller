@@ -1,8 +1,11 @@
 package com.retrotrack.openitempuller.gui.screen;
 
 import com.retrotrack.openitempuller.gui.widget.IPCheckboxWidget;
+import com.retrotrack.openitempuller.gui.widget.hover.TextHoverButtonWidget;
 import com.retrotrack.openitempuller.gui.widget.VerticalScrollbarWidget;
+import com.retrotrack.openitempuller.gui.widget.hover.TextHoverWidget;
 import com.retrotrack.openitempuller.networking.ModMessages;
+import com.retrotrack.openitempuller.util.ChestFinder;
 import com.retrotrack.openitempuller.util.RenderUtil;
 import com.retrotrack.openitempuller.util.decoding.DecodedChest;
 import com.retrotrack.openitempuller.util.decoding.NbtChestCoder;
@@ -32,47 +35,48 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static com.retrotrack.openitempuller.ItemPuller.CONFIG;
 import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
 
 @Environment(EnvType.CLIENT)
 public class PullItemScreen extends Screen {
-    protected int backgroundWidth = 259;
-    protected int backgroundHeight = 182;
-    private final Screen parent;
-    private static final Identifier TEXTURE = new Identifier(MOD_ID, "textures/gui/screen/pull_item_screen.png");
-    protected int TEXTURE_WIDTH = 259;
-    protected int TEXTURE_HEIGHT = 182;
 
+    //Screen Constants
+    protected final int backgroundWidth = 259;
+    protected final int backgroundHeight = 182;
+    private static final Identifier TEXTURE = new Identifier(MOD_ID, "textures/gui/screen/pull_item_screen.png");
+    private int i = (this.width - this.backgroundWidth) / 2;
+    private int j = (this.height - this.backgroundHeight) / 2;
+    private final Screen parent;
+
+    //Screen Buttons
     private TexturedButtonWidget pullButton;
-    private ArrayList<TexturedButtonWidget> chestsDisplayHovers = new ArrayList<>();
-    private ArrayList<Text> chestDisplayTexts = new ArrayList<>();
-    private ArrayList<Text> itemCountTexts = new ArrayList<>();
-    private ArrayList<TexturedButtonWidget> itemSelectButtons = new ArrayList<>();
-    private ArrayList<RenderUtil.RenderVariables> renderVariables = new ArrayList<>();
+
+    private final int serverRadius;
+
+    private final ArrayList<TextHoverButtonWidget> chestsDisplayHovers = new ArrayList<>();
+    private final ArrayList<Text> chestDisplayTexts = new ArrayList<>();
+    private final ArrayList<Text> itemCountTexts = new ArrayList<>();
+    private final ArrayList<TexturedButtonWidget> itemSelectButtons = new ArrayList<>();
+    private final ArrayList<RenderUtil.RenderVariables> renderVariables = new ArrayList<>();
     private Item selectedItem;
-    private ArrayList<Text> itemSelectTexts = new ArrayList<>();
-    private ArrayList<Text> chestText = new ArrayList<>();
-    private ArrayList<TextFieldWidget> textFieldWidgets = new ArrayList<>();
-    private ArrayList<IPCheckboxWidget> checkBoxWidgets = new ArrayList<>();
+    private final ArrayList<Text> itemSelectTexts = new ArrayList<>();
+    private final ArrayList<TextFieldWidget> textFieldWidgets = new ArrayList<>();
+    private final ArrayList<IPCheckboxWidget> checkBoxWidgets = new ArrayList<>();
     private ArrayList<DecodedChest> chestsWithItem = new ArrayList<>();
     private TextFieldWidget searchBar;
-    private int i;
-    private int j;
     private final ArrayList<DecodedChest> decodedChests;
-    private final NbtCompound byteBufNbt;
     private int offset = 0;
     private VerticalScrollbarWidget scrollbarWidget;
     private List<Item> sortedItems;
     private List<Item> filteredList;
     private String currentSearch = "";
-    private final int serverRadius;
     private TexturedButtonWidget settingsButton;
 
     public PullItemScreen(Screen parent, PacketByteBuf buf) {
         super(Text.literal(" "));
-        this.byteBufNbt = buf.readNbt();
         this.parent = parent;
-        this.decodedChests = NbtChestCoder.decode(byteBufNbt);
+        this.decodedChests = NbtChestCoder.decode(buf.readNbt());
         serverRadius = buf.readInt();
     }
 
@@ -122,7 +126,7 @@ public class PullItemScreen extends Screen {
         assert this.client != null;
         if (this.client.world != null) {
             this.renderInGameBackground(context);
-            context.drawTexture(TEXTURE, this.i, this.j - 8, 0, 0, this.backgroundWidth, this.backgroundHeight, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+            context.drawTexture(TEXTURE, this.i, this.j - 8, 0, 0, this.backgroundWidth, this.backgroundHeight, backgroundWidth, backgroundHeight);
         } else {
             this.renderBackgroundTexture(context);
         }
@@ -182,9 +186,7 @@ public class PullItemScreen extends Screen {
         chestsDisplayHovers.forEach(this::addDrawableChild);
         textFieldWidgets.forEach(this::addDrawableChild);
         checkBoxWidgets.forEach(this::addDrawableChild);
-        ButtonWidget button1 = ButtonWidget.builder(Text.translatable("open_item_puller.pull_screen.pull_button"), button -> {
-                    pullItems();
-                })
+        ButtonWidget button1 = ButtonWidget.builder(Text.translatable("open_item_puller.pull_screen.pull_button"), button -> pullItems())
                 .dimensions(this.i + 174, this.height / 2 + 83, 80, 20)
                 .build();
         this.addDrawableChild(button1);
@@ -197,19 +199,19 @@ public class PullItemScreen extends Screen {
         initButtons(-1, false, false);
     }
     private ArrayList<DecodedChest> hasChestItem(Item item) {
-        return decodedChests.stream().filter(chest -> chest.items().containsKey(item)).collect(Collectors.toCollection(ArrayList::new));
+        ArrayList<DecodedChest> collect = decodedChests.stream().filter(chest -> chest.items().containsKey(item)).collect(Collectors.toCollection(ArrayList::new));
+        ArrayList<DecodedChest> collect2;
+        if(CONFIG.getInteger("priority_type") == 1) collect2 = ChestFinder.sortByItemCount(collect, selectedItem);
+        else collect2 = collect;
+        return collect2;
     }
 
     private void addButtons() {
         if (this.client == null) return;
         settingsButton = new TexturedButtonWidget(this.i + 217, this.height / 2 - 100, 20, 18,
-                new ButtonTextures(new Identifier(MOD_ID, "button/settings/settings_button"), new Identifier(MOD_ID, "button/settings/settings_button")), (button) -> {
-            client.setScreen(new SettingsScreen(this, serverRadius));
-        });
+                new ButtonTextures(new Identifier(MOD_ID, "button/settings/settings_button"), new Identifier(MOD_ID, "button/settings/settings_button")), (button) -> client.setScreen(new SettingsScreen(this, serverRadius)));
         pullButton = new TexturedButtonWidget(this.i + 237, this.height / 2 - 100, 20, 18,
-                new ButtonTextures(new Identifier(MOD_ID, "button/pull/pull_button_highlighted"), new Identifier(MOD_ID, "button/pull/pull_button_highlighted")), (button) -> {
-            client.setScreen(parent);
-        });
+                new ButtonTextures(new Identifier(MOD_ID, "button/pull/pull_button_highlighted"), new Identifier(MOD_ID, "button/pull/pull_button_highlighted")), (button) -> client.setScreen(parent));
 
         for (int k = 0; k < Math.min(12, filteredList.size()); k++) {
             int finalK = k;
@@ -239,22 +241,18 @@ public class PullItemScreen extends Screen {
 
     private void addChestDisplays(Item selectedItem) {
         chestsWithItem = hasChestItem(selectedItem);
+
         for (int k = 0; k < chestsWithItem.size(); k++) {
             if(k < 10) {
-                TexturedButtonWidget widget = new TexturedButtonWidget(
-                        this.i + 105, this.height / 2 - (64 - 14 * k), 65, 14,
-                        new ButtonTextures(new Identifier(MOD_ID, "button/invisible/invisible"),
-                                new Identifier(MOD_ID, "button/invisible/invisible")), a -> {
-                });
+                TextHoverWidget widget = new TextHoverWidget(
+                        this.i + 105, this.height / 2 - (64 - 14 * k), 65, 14);
                 widget.setTooltip(Tooltip.of(Text.literal(chestsWithItem.get(k).name())));
                 itemCountTexts.add(Text.literal(String.valueOf(chestsWithItem.get(k).items().get(selectedItem))));
                 chestsDisplayHovers.add(widget);
                 chestDisplayTexts.add(Text.literal(StringUtils.abbreviate(chestsWithItem.get(k).name(), 10)));
                 textFieldWidgets.add(new TextFieldWidget(textRenderer,this.i + 205, this.height / 2 - (64 - 14 * k),32, 12, Text.literal("")));
                 int finalK = k;
-                checkBoxWidgets.add(IPCheckboxWidget.builder(Text.literal(""), textRenderer).callback((checkbox, checked) -> {
-                    textFieldWidgets.get(finalK).setText(checked ? String.valueOf(chestsWithItem.get(finalK).items().get(selectedItem)) :  "");
-                }).pos(this.i + 240, this.height / 2 - (64 - 14 * k)).build());
+                checkBoxWidgets.add(IPCheckboxWidget.builder(Text.literal(""), textRenderer).callback((checkbox, checked) -> textFieldWidgets.get(finalK).setText(checked ? String.valueOf(chestsWithItem.get(finalK).items().get(selectedItem)) :  "")).pos(this.i + 240, this.height / 2 - (64 - 14 * k)).build());
             }
         }
     }
