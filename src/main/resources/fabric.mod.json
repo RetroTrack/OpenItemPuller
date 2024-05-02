@@ -9,7 +9,7 @@
     "repo": "https://github.com/RetroTrack/OpenItemPuller"
   },
   "license": "MIT",
-  "icon": "assets/openitempuller/icon.png",
+  "icon": "assets/open_item_puller/icon.png",
   "environment": "*",
   "entrypoints": {
     "client": [
