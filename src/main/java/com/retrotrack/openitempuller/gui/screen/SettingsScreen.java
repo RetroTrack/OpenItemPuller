@@ -2,6 +2,7 @@ package com.retrotrack.openitempuller.gui.screen;
 
 import com.retrotrack.openitempuller.ItemPuller;
 import com.retrotrack.openitempuller.config.ItemPullerConfig;
+import com.retrotrack.openitempuller.gui.widget.hover.TextHoverWidget;
 import com.retrotrack.openitempuller.networking.ModMessages;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -26,23 +27,26 @@ import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
 
 @Environment(EnvType.CLIENT)
 public class SettingsScreen extends Screen {
+    //Screen Constants
     protected int backgroundWidth = 259;
     protected int backgroundHeight = 182;
-    private final Screen parent;
     private static final Identifier TEXTURE = new Identifier(MOD_ID, "textures/gui/screen/settings_screen.png");
-    protected int TEXTURE_WIDTH = 259;
-    protected int TEXTURE_HEIGHT = 182;
+    private int i = (this.width - this.backgroundWidth) / 2;
+    private int j = (this.height - this.backgroundHeight) / 2;
+    private final Screen parent;
 
-    private TexturedButtonWidget pullButton;
-    private final ArrayList<Text> textWidgets = new ArrayList<>();
-    private final ArrayList<TexturedButtonWidget> textHovers = new ArrayList<>();
+    //Screen Widgets
+    private final ArrayList<TextHoverWidget> textHovers = new ArrayList<>();
     private final ArrayList<TextFieldWidget> textFieldWidgets = new ArrayList<>();
-
-    private int i;
-    private int j;
-    private final int serverRadius;
-    private ButtonWidget priorityButton;
+    private TexturedButtonWidget pullButton;
     private TexturedButtonWidget settingsButton;
+    private ButtonWidget priorityButton;
+
+    //Screen Texts
+    private final ArrayList<Text> textWidgets = new ArrayList<>();
+
+    //Variables
+    private final int serverRadius;
     private int priorityType = ItemPuller.CONFIG.getInteger("priority_type");
 
     public SettingsScreen(Screen parent, int serverRadius) {
@@ -80,7 +84,7 @@ public class SettingsScreen extends Screen {
         assert this.client != null;
         if (this.client.world != null) {
             this.renderInGameBackground(context);
-            context.drawTexture(TEXTURE, this.i, this.j - 8, 0, 0, this.backgroundWidth, this.backgroundHeight, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+            context.drawTexture(TEXTURE, this.i, this.j - 8, 0, 0, this.backgroundWidth, this.backgroundHeight, backgroundWidth, backgroundHeight);
         } else {
             this.renderBackgroundTexture(context);
         }
@@ -132,9 +136,7 @@ public class SettingsScreen extends Screen {
         textFieldWidgets.get(0).setText(CONFIG.getString("radius"));
         for (int k = 0; k < 2; k++) {
 
-            TexturedButtonWidget widget = new TexturedButtonWidget(this.i + 8, this.height / 2 - (78 - 14 * k), 70, 14,
-                    new ButtonTextures(new Identifier(MOD_ID, "button/invisible/invisible"),
-                            new Identifier(MOD_ID, "button/invisible/invisible")), a -> {});
+            TextHoverWidget widget = new TextHoverWidget(this.i + 8, this.height / 2 - (78 - 14 * k), 70, 14);
 
             widget.setTooltip(Tooltip.of(Text.translatable("open_item_puller.settings_screen.option_" + k + ".tooltip", serverRadius)));
 

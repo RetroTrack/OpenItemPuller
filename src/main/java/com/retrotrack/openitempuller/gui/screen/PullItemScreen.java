@@ -49,29 +49,37 @@ public class PullItemScreen extends Screen {
     private int j = (this.height - this.backgroundHeight) / 2;
     private final Screen parent;
 
-    //Screen Buttons
-    private TexturedButtonWidget pullButton;
-
-    private final int serverRadius;
-
-    private final ArrayList<TextHoverButtonWidget> chestsDisplayHovers = new ArrayList<>();
-    private final ArrayList<Text> chestDisplayTexts = new ArrayList<>();
-    private final ArrayList<Text> itemCountTexts = new ArrayList<>();
-    private final ArrayList<TexturedButtonWidget> itemSelectButtons = new ArrayList<>();
-    private final ArrayList<RenderUtil.RenderVariables> renderVariables = new ArrayList<>();
+    //Screen Variables
+    private int offset = 0;
+    private String currentSearch = "";
     private Item selectedItem;
-    private final ArrayList<Text> itemSelectTexts = new ArrayList<>();
+
+
+    //Screen Widgets
+    private TexturedButtonWidget pullButton;
+    private final ArrayList<TexturedButtonWidget> itemSelectButtons = new ArrayList<>();
     private final ArrayList<TextFieldWidget> textFieldWidgets = new ArrayList<>();
     private final ArrayList<IPCheckboxWidget> checkBoxWidgets = new ArrayList<>();
-    private ArrayList<DecodedChest> chestsWithItem = new ArrayList<>();
+    private final ArrayList<TextHoverButtonWidget> chestsDisplayHovers = new ArrayList<>();
     private TextFieldWidget searchBar;
-    private final ArrayList<DecodedChest> decodedChests;
-    private int offset = 0;
     private VerticalScrollbarWidget scrollbarWidget;
+
+    //Screen Texts
+    private final ArrayList<Text> chestDisplayTexts = new ArrayList<>();
+    private final ArrayList<Text> itemCountTexts = new ArrayList<>();
+    private final ArrayList<Text> itemSelectTexts = new ArrayList<>();
+    private TexturedButtonWidget settingsButton;
+
+    //Constants
+    private final ArrayList<RenderUtil.RenderVariables> renderVariables = new ArrayList<>();
+    private final ArrayList<DecodedChest> decodedChests;
+    private final int serverRadius;
+
+    //Variables
+    private ArrayList<DecodedChest> chestsWithItem = new ArrayList<>();
     private List<Item> sortedItems;
     private List<Item> filteredList;
-    private String currentSearch = "";
-    private TexturedButtonWidget settingsButton;
+
 
     public PullItemScreen(Screen parent, PacketByteBuf buf) {
         super(Text.literal(" "));
