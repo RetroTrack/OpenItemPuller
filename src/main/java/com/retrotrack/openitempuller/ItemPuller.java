@@ -9,7 +9,7 @@ import static com.retrotrack.openitempuller.networking.ModMessages.registerC2SPa
 public class ItemPuller implements ModInitializer {
 
     public static ItemPullerConfig.Config CONFIG;
-    public static final String MOD_ID = "open_item_puller";
+    public static final String MOD_ID = "openitempuller";
     /**
      * Runs the mod initializer. (both client and server)
      */

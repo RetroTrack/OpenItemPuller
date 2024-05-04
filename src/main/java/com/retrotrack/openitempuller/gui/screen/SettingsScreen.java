@@ -125,10 +125,10 @@ public class SettingsScreen extends Screen {
             }
         });
 
-        priorityButton = ButtonWidget.builder(Text.translatable("open_item_puller.settings_screen.option_1.mode_" + priorityType), button -> {
+        priorityButton = ButtonWidget.builder(Text.translatable("openitempuller.settings_screen.option_1.mode_" + priorityType), button -> {
                 if(priorityType >= 1) priorityType = 0;
                 else priorityType++;
-                button.setMessage(Text.translatable("open_item_puller.settings_screen.option_1.mode_" + priorityType));
+                button.setMessage(Text.translatable("openitempuller.settings_screen.option_1.mode_" + priorityType));
                 })
                 .dimensions(this.i + 85, this.height / 2 - 62, 80, 18)
                 .build();
@@ -138,9 +138,9 @@ public class SettingsScreen extends Screen {
 
             TextHoverWidget widget = new TextHoverWidget(this.i + 8, this.height / 2 - (78 - 14 * k), 70, 14);
 
-            widget.setTooltip(Tooltip.of(Text.translatable("open_item_puller.settings_screen.option_" + k + ".tooltip", serverRadius)));
+            widget.setTooltip(Tooltip.of(Text.translatable("openitempuller.settings_screen.option_" + k + ".tooltip", serverRadius)));
 
-            textWidgets.add(Text.translatable("open_item_puller.settings_screen.option_" + k));
+            textWidgets.add(Text.translatable("openitempuller.settings_screen.option_" + k));
             textHovers.add(widget);
         }
     }

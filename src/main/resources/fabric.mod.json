@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "open_item_puller",
+  "id": "openitempuller",
   "version": "${version}",
   "name": "OpenItemPuller",
   "description": "Wondering where you left all those items? With OIP you'll find them in seconds!",
@@ -9,7 +9,7 @@
     "repo": "https://github.com/RetroTrack/OpenItemPuller"
   },
   "license": "MIT",
-  "icon": "assets/open_item_puller/icon.png",
+  "icon": "assets/openitempuller/icon.png",
   "environment": "*",
   "entrypoints": {
     "client": [

@@ -70,7 +70,7 @@ public class ItemPullerConfig {
         public Config() {
             properties = new HashMap<>();
             // Set default values
-            properties.put("radius", 128);
+            properties.put("radius", 16);
             properties.put("priority_type", 0);
         }
 

@@ -144,7 +144,7 @@ public class PullItemScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
         IntStream.range(0, itemSelectTexts.size()).forEach(k -> context.drawText(textRenderer, itemSelectTexts.get(k), this.i + 22, this.height / 2 - (75 - 14 * k), 0xffffff, true));
-        context.drawText(textRenderer, Text.translatable("open_item_puller.pull_screen.top_names"), this.i + 105, this.height / 2 - 74, 0xffffff, true);
+        context.drawText(textRenderer, Text.translatable("openitempuller.pull_screen.top_names"), this.i + 105, this.height / 2 - 74, 0xffffff, true);
         IntStream.range(0, chestDisplayTexts.size()).forEach(k -> context.drawText(textRenderer, chestDisplayTexts.get(k), this.i + 105, this.height / 2 - (62 - 14 * k), 0xffffff, true));
         IntStream.range(0, itemCountTexts.size()).forEach(k -> context.drawText(textRenderer, itemCountTexts.get(k), this.i + 177, this.height / 2 - (63 - 14 * k), 0xffffff, true));
         renderVariables.forEach(RenderUtil::renderItemAt);
@@ -173,7 +173,7 @@ public class PullItemScreen extends Screen {
                     filterList();
                 }
             };
-        searchBar.setPlaceholder(Text.translatable("open_item_puller.pull_screen.search"));
+        searchBar.setPlaceholder(Text.translatable("openitempuller.pull_screen.search"));
         searchBar.setText(currentSearch);
         this.addDrawableChild(this.searchBar);
         this.addDrawableChild(this.scrollbarWidget);
@@ -194,7 +194,7 @@ public class PullItemScreen extends Screen {
         chestsDisplayHovers.forEach(this::addDrawableChild);
         textFieldWidgets.forEach(this::addDrawableChild);
         checkBoxWidgets.forEach(this::addDrawableChild);
-        ButtonWidget button1 = ButtonWidget.builder(Text.translatable("open_item_puller.pull_screen.pull_button"), button -> pullItems())
+        ButtonWidget button1 = ButtonWidget.builder(Text.translatable("openitempuller.pull_screen.pull_button"), button -> pullItems())
                 .dimensions(this.i + 174, this.height / 2 + 83, 80, 20)
                 .build();
         this.addDrawableChild(button1);
