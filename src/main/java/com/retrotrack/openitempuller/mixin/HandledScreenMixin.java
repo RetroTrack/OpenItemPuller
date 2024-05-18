@@ -1,6 +1,9 @@
 package com.retrotrack.openitempuller.mixin;
 
+import com.retrotrack.openitempuller.ItemPuller;
 import com.retrotrack.openitempuller.networking.ModMessages;
+import com.retrotrack.openitempuller.networking.packets.CheckChestPacket;
+import com.retrotrack.openitempuller.networking.packets.OpenSettingsScreenPacket;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -78,16 +81,15 @@ public abstract class HandledScreenMixin extends Screen {
         settingsButton = this.addDrawableChild(new TexturedButtonWidget(this.x + 134, (this.height / 2 - this.backgroundHeight / 2 - (this.handler instanceof ShulkerBoxScreenHandler || this.handler instanceof HopperScreenHandler ? 18 : 17)), 20, 18,
                 new ButtonTextures(new Identifier(MOD_ID, "button/settings/settings_button"/*default*/), new Identifier(MOD_ID, "button/settings/settings_button_highlighted"/*highlighted*/)),
                 (button) -> {
-                    PacketByteBuf buf = PacketByteBufs.create();
-                    ClientPlayNetworking.send(ModMessages.OPEN_SETTINGS_SCREEN_C2S, buf);
+                    OpenSettingsScreenPacket openSettingsScreenPacket = new OpenSettingsScreenPacket(-1);
+                    ClientPlayNetworking.send(openSettingsScreenPacket);
                 }));
         // Create pull button and attach action for checking chests
         pullButton = this.addDrawableChild(new TexturedButtonWidget(this.x + 154, (this.height / 2 - this.backgroundHeight / 2 - (this.handler instanceof ShulkerBoxScreenHandler || this.handler instanceof HopperScreenHandler ? 18 : 17)), 20, 18,
                 new ButtonTextures(new Identifier(MOD_ID, "button/pull/pull_button"/*default*/), new Identifier(MOD_ID, "button/pull/pull_button_highlighted"/*highlighted*/)), (button) -> {
             // Send Check Chest Packet
-            PacketByteBuf buf = PacketByteBufs.create();
-            buf.writeInt(CONFIG.getInteger("radius"));
-            ClientPlayNetworking.send(ModMessages.CHECK_CHESTS, buf);
+            CheckChestPacket checkChestPacket = new CheckChestPacket(ItemPuller.CONFIG.getInteger("radius"));
+            ClientPlayNetworking.send(checkChestPacket);
         }));
     }
 }

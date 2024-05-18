@@ -4,7 +4,7 @@ import com.retrotrack.openitempuller.config.ItemPullerConfig;
 import net.fabricmc.api.ModInitializer;
 
 import static com.retrotrack.openitempuller.config.ItemPullerConfig.initConfig;
-import static com.retrotrack.openitempuller.networking.ModMessages.registerC2SPackets;
+import static com.retrotrack.openitempuller.networking.ModMessages.registerServerPackets;
 
 public class ItemPuller implements ModInitializer {
 
@@ -16,6 +16,6 @@ public class ItemPuller implements ModInitializer {
     @Override
     public void onInitialize() {
         initConfig();
-        registerC2SPackets();
+        registerServerPackets();
     }
 }

@@ -9,6 +9,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
@@ -19,9 +20,7 @@ import java.util.stream.IntStream;
 
 public class NbtChestCoder {
     // Encodes chest data into a PacketByteBuf
-    public static PacketByteBuf encode(List<LockableContainerBlockEntity> lockableContainerBlockEntityList, ServerPlayerEntity player) {
-        // Create a new PacketByteBuf to store the encoded data
-        PacketByteBuf buf = PacketByteBufs.create();
+    public static NbtCompound encode(List<LockableContainerBlockEntity> lockableContainerBlockEntityList, ServerPlayerEntity player) {
         // Create a NbtCompound to hold the encoded data
         NbtCompound nbtCompound = new NbtCompound();
 
@@ -82,9 +81,39 @@ public class NbtChestCoder {
             nbtCompound.put("chest_" + chestIndex, chestNbt);
         }
 
-        // Write the main compound to the PacketByteBuf and return buf
-        buf.writeNbt(nbtCompound);
-        return buf;
+        //Return compound
+        return nbtCompound;
+    }
+
+    public static NbtCompound encode(ServerWorld world, ArrayList<DecodedChest> decodedChests) {
+        NbtCompound nbtCompound = new NbtCompound();
+
+        nbtCompound.putInt("chest_list_size", decodedChests.size());
+
+        for (int chestIndex = 0; chestIndex < decodedChests.size(); chestIndex++) {
+            DecodedChest decodedChest = decodedChests.get(chestIndex);
+
+            NbtCompound chestNbt = new NbtCompound();
+
+            chestNbt.putString("chest_name", decodedChest.name());
+            chestNbt.putIntArray("pos", new int[]{decodedChest.pos().getX(), decodedChest.pos().getY(), decodedChest.pos().getZ()});
+
+            NbtCompound itemList = new NbtCompound();
+            itemList.putInt("item_list_size", decodedChest.items().size());
+            int itemIndex = 0;
+            for (Item item : decodedChest.items().keySet()) {
+                    Identifier itemId = Registries.ITEM.getId(item);
+                    itemList.putString("item_" + itemIndex, itemId.toString());
+                    itemList.putInt("item_" + itemIndex + "_amount", decodedChest.items().get(item));
+                    itemIndex++;
+            }
+
+            chestNbt.put("item_list", itemList);
+            nbtCompound.put("chest_" + chestIndex, chestNbt);
+        }
+
+        //Return compound
+        return nbtCompound;
     }
 
     public static ArrayList<DecodedChest> decode(NbtCompound nbtCompound) {

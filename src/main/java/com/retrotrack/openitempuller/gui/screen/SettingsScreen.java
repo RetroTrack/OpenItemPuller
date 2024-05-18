@@ -4,6 +4,8 @@ import com.retrotrack.openitempuller.ItemPuller;
 import com.retrotrack.openitempuller.config.ItemPullerConfig;
 import com.retrotrack.openitempuller.gui.widget.hover.TextHoverWidget;
 import com.retrotrack.openitempuller.networking.ModMessages;
+import com.retrotrack.openitempuller.networking.packets.CheckChestPacket;
+import com.retrotrack.openitempuller.networking.packets.PullItemsPacket;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -119,9 +121,8 @@ public class SettingsScreen extends Screen {
             saveFiles();
             if(parent instanceof PullItemScreen) client.setScreen(parent);
             else {
-                PacketByteBuf buf = PacketByteBufs.create();
-                buf.writeInt(ItemPuller.CONFIG.getInteger("radius"));
-                ClientPlayNetworking.send(ModMessages.CHECK_CHESTS, buf);
+                CheckChestPacket checkChestPacket = new CheckChestPacket(ItemPuller.CONFIG.getInteger("radius"));
+                ClientPlayNetworking.send(checkChestPacket);
             }
         });
 

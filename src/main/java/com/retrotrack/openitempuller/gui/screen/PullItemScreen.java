@@ -5,14 +5,16 @@ import com.retrotrack.openitempuller.gui.widget.hover.TextHoverButtonWidget;
 import com.retrotrack.openitempuller.gui.widget.VerticalScrollbarWidget;
 import com.retrotrack.openitempuller.gui.widget.hover.TextHoverWidget;
 import com.retrotrack.openitempuller.networking.ModMessages;
+import com.retrotrack.openitempuller.networking.packets.OpenSettingsScreenPacket;
+import com.retrotrack.openitempuller.networking.packets.PullItemsPacket;
 import com.retrotrack.openitempuller.util.ChestFinder;
 import com.retrotrack.openitempuller.util.RenderUtil;
 import com.retrotrack.openitempuller.util.decoding.DecodedChest;
-import com.retrotrack.openitempuller.util.decoding.NbtChestCoder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.screen.Screen;
@@ -81,11 +83,11 @@ public class PullItemScreen extends Screen {
     private List<Item> filteredList;
 
 
-    public PullItemScreen(Screen parent, PacketByteBuf buf) {
+    public PullItemScreen(Screen parent, ArrayList<DecodedChest> decodedChests, int serverRadius) {
         super(Text.literal(" "));
         this.parent = parent;
-        this.decodedChests = NbtChestCoder.decode(buf.readNbt());
-        serverRadius = buf.readInt();
+        this.decodedChests = decodedChests;
+        this.serverRadius = serverRadius;
     }
 
     @Override
@@ -269,7 +271,6 @@ public class PullItemScreen extends Screen {
     public void pullItems() {
         if (client != null) client.setScreen(parent);
         int size = 0;
-        PacketByteBuf buf = PacketByteBufs.create();
         NbtCompound compound = new NbtCompound();
         for (int k = 0; k < textFieldWidgets.size(); k++) {
             int value = getInt(textFieldWidgets.get(k).getText());
@@ -283,8 +284,9 @@ public class PullItemScreen extends Screen {
             size++;
         }
         compound.putInt("size", size);
-        buf.writeNbt(compound);
-        ClientPlayNetworking.send(ModMessages.PULL_ITEMS, buf);
+
+        PullItemsPacket pullItemsPacket = new PullItemsPacket(compound);
+        ClientPlayNetworking.send(pullItemsPacket);
     }
 
     public static int getInt(String str) {

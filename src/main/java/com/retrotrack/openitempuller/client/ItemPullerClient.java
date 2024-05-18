@@ -2,7 +2,7 @@ package com.retrotrack.openitempuller.client;
 
 import net.fabricmc.api.ClientModInitializer;
 
-import static com.retrotrack.openitempuller.networking.ModMessages.registerS2CPackets;
+import static com.retrotrack.openitempuller.networking.ModMessages.registerClientPackets;
 
 public class ItemPullerClient implements ClientModInitializer {
     /**
@@ -10,6 +10,6 @@ public class ItemPullerClient implements ClientModInitializer {
      */
     @Override
     public void onInitializeClient() {
-        registerS2CPackets();
+        registerClientPackets();
     }
 }
