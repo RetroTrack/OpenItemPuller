@@ -64,7 +64,7 @@ public class IPCheckboxWidget extends PressableWidget {
     }
 
     @Override
-    public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {
         MinecraftClient minecraftClient = MinecraftClient.getInstance();
         RenderSystem.enableDepthTest();
         TextRenderer textRenderer = minecraftClient.textRenderer;
@@ -80,7 +80,7 @@ public class IPCheckboxWidget extends PressableWidget {
         int i = getSize();
         int j = this.getX() + i + 4;
         int k = this.getY() + (this.height >> 1) - (9 >> 1);
-        context.drawGuiTexture(identifier, this.getX(), this.getY(), i, i);
+        context.drawTexture(identifier, this.getX(), this.getY(), 0, 0, i, i);
         context.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         context.drawTextWithShadow(textRenderer, this.getMessage(), j, k, 14737632 | MathHelper.ceil(this.alpha * 255.0F) << 24);
     }

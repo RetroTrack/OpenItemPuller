@@ -6,35 +6,28 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ButtonTextures;
-import net.minecraft.client.input.KeyCodes;
+import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
+import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 
-/**
- * A pressable widget has a press action. It is pressed when it is clicked. It is
- * also pressed when enter or space keys are pressed when it is selected.
- */
-@Environment(EnvType.CLIENT)
-public abstract class NonPressableWidget extends NonClickableWidget {
-    private static final ButtonTextures TEXTURES = new ButtonTextures(
-            new Identifier("widget/button"), new Identifier("widget/button_disabled"), new Identifier("widget/button_highlighted")
-    );
+import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
 
-    public NonPressableWidget(int i, int j, int k, int l, Text text) {
-        super(i, j, k, l, text);
+@Environment(EnvType.CLIENT)
+public class HoverWidget extends ClickableWidget {
+    public HoverWidget(int x, int y, int width, int height) {
+        super(x, y, width, height, Text.literal(""));
     }
 
-    public abstract void onPress();
 
     @Override
-    protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    protected void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {
         MinecraftClient minecraftClient = MinecraftClient.getInstance();
         context.setShaderColor(1.0F, 1.0F, 1.0F, this.alpha);
         RenderSystem.enableBlend();
         RenderSystem.enableDepthTest();
-        context.drawGuiTexture(TEXTURES.get(this.active, this.isSelected()), this.getX(), this.getY(), this.getWidth(), this.getHeight());
+        context.drawNineSlicedTexture(new Identifier(MOD_ID, "button/invisible/invisible"), this.getX(), this.getY(), this.getWidth(), this.getHeight(), 20, 4, 200, 20, 0, 0);
         context.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         int i = this.active ? 16777215 : 10526880;
         this.drawMessage(context, minecraftClient.textRenderer, i | MathHelper.ceil(this.alpha * 255.0F) << 24);
@@ -45,18 +38,14 @@ public abstract class NonPressableWidget extends NonClickableWidget {
     }
 
     @Override
-    public void onClick(double mouseX, double mouseY) {
+    public void onClick(double mouseX, double mouseY) {}
+
+    @Override
+    protected void appendClickableNarrations(NarrationMessageBuilder builder) {
     }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (!this.active || !this.visible) {
             return false;
-        } else if (KeyCodes.isToggle(keyCode)) {
-            this.onPress();
-            return true;
-        } else {
-            return false;
-        }
     }
 }

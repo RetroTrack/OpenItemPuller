@@ -21,10 +21,10 @@ public class ChestFinder {
         return sortByDistance(findLootableContainerBlockEntitiesAroundPlayer(world, player, radius), player);
     }
 
-    public static LockableContainerBlockEntity checkLockableContainerBlockEntity(ServerWorld world, BlockPos pos) {
+    public static LockableContainerBlockEntity checkLockableContainerBlockEntity(ServerWorld world, BlockPos pos, ServerPlayerEntity player) {
         BlockEntity blockEntity = world.getBlockEntity(pos);
         if (!(blockEntity instanceof LockableContainerBlockEntity)) return null;
-        if ((blockEntity instanceof LootableContainerBlockEntity) && ((LootableContainerBlockEntity) blockEntity).getLootTableId() != null) return null;
+        if ((blockEntity instanceof LootableContainerBlockEntity) && (((UnlockedLootable) blockEntity)).publicLootTableId != null) return null;
         return ((LockableContainerBlockEntity) blockEntity);
     }
 
@@ -48,7 +48,7 @@ public class ChestFinder {
                     if (blockEntity instanceof LootableContainerBlockEntity) {
                         BlockPos chestPos = blockEntity.getPos();
                         // Check if the chest is within the radius
-                        if (player.getBlockPos().getSquaredDistance(chestPos) <= radius * radius && ((LootableContainerBlockEntity)blockEntity).getLootTableId() == null) {
+                        if (player.getBlockPos().getSquaredDistance(chestPos) <= radius * radius && ((UnlockedLootable)blockEntity).publicLootTableId == null) {
                             BlockPos connectedChest = ChestConnectionChecker.getConnectedChestPos(player, chestPos);
                             if(connectedChest == null) list.add((LockableContainerBlockEntity) blockEntity);
                             else if(!list.contains((LockableContainerBlockEntity) world.getBlockEntity(connectedChest)))list.add((LockableContainerBlockEntity) blockEntity);

@@ -48,7 +48,7 @@ public class PullItemsPacket implements FabricPacket {
                 if (child == null) continue;
                 BlockPos pos = new BlockPos(child.getIntArray("pos")[0], child.getIntArray("pos")[1], child.getIntArray("pos")[2]);
 
-                LockableContainerBlockEntity chestBlockEntity = ChestFinder.checkLockableContainerBlockEntity(player.getServerWorld(), pos);
+                LockableContainerBlockEntity chestBlockEntity = ChestFinder.checkLockableContainerBlockEntity(player.getServerWorld(), pos, player);
                 if (chestBlockEntity == null) continue;
 
                 Inventory chestInventory = HopperBlockEntity.getInventoryAt(player.getServerWorld(), chestBlockEntity.getPos());

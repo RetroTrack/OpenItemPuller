@@ -35,7 +35,7 @@ public class VerticalScrollbarWidget extends ClickableWidget {
     }
 
     @Override
-    protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    protected void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {
         context.drawTexture(TEXTURE, this.x, this.y + (int) ((float) scrollPos / scrollHeight * height), 0, 0, 7, 15, 7, 15);
 
     }
@@ -48,10 +48,10 @@ public class VerticalScrollbarWidget extends ClickableWidget {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        scrollPos = MathHelper.clamp(scrollPos - (verticalAmount), 0, scrollHeight -14);
+    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+        scrollPos = MathHelper.clamp(scrollPos - (amount), 0, scrollHeight -14);
         this.callback.onValueChange(scrollPos, scrollHeight - 14);
-        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+        return super.mouseScrolled(mouseX, mouseY, amount);
     }
 
     @Override
@@ -62,9 +62,6 @@ public class VerticalScrollbarWidget extends ClickableWidget {
 
     @Environment(EnvType.CLIENT)
     public interface Callback {
-        IPCheckboxWidget.Callback EMPTY = (checkbox, checked) -> {
-        };
-
         void onValueChange(double scrollbarPos, int scrollHeight);
     }
 }

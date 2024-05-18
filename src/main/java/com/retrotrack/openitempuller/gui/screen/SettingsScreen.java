@@ -2,22 +2,17 @@ package com.retrotrack.openitempuller.gui.screen;
 
 import com.retrotrack.openitempuller.ItemPuller;
 import com.retrotrack.openitempuller.config.ItemPullerConfig;
-import com.retrotrack.openitempuller.gui.widget.hover.TextHoverWidget;
-import com.retrotrack.openitempuller.networking.ModMessages;
+import com.retrotrack.openitempuller.gui.widget.hover.HoverWidget;
 import com.retrotrack.openitempuller.networking.packets.CheckChestPacket;
-import com.retrotrack.openitempuller.networking.packets.PullItemsPacket;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -38,7 +33,7 @@ public class SettingsScreen extends Screen {
     private final Screen parent;
 
     //Screen Widgets
-    private final ArrayList<TextHoverWidget> textHovers = new ArrayList<>();
+    private final ArrayList<HoverWidget> textHovers = new ArrayList<>();
     private final ArrayList<TextFieldWidget> textFieldWidgets = new ArrayList<>();
     private TexturedButtonWidget pullButton;
     private TexturedButtonWidget settingsButton;
@@ -82,10 +77,10 @@ public class SettingsScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderBackground(DrawContext context) {
         assert this.client != null;
         if (this.client.world != null) {
-            this.renderInGameBackground(context);
+            context.fillGradient(0, 0, this.width, this.height, -1072689136, -804253680);
             context.drawTexture(TEXTURE, this.i, this.j - 8, 0, 0, this.backgroundWidth, this.backgroundHeight, backgroundWidth, backgroundHeight);
         } else {
             this.renderBackgroundTexture(context);
@@ -110,14 +105,14 @@ public class SettingsScreen extends Screen {
     private void addWidgets() {
         if (this.client == null) return;
 
-        settingsButton = new TexturedButtonWidget(this.i + 217, this.height / 2 - 100, 20, 18,
-                new ButtonTextures(new Identifier(MOD_ID, "button/settings/settings_button_highlighted"), new Identifier(MOD_ID, "button/settings/settings_button_highlighted")), (button) -> {
+
+        settingsButton = new TexturedButtonWidget(this.i + 217, this.height / 2 - 100, 20, 18, 0, 0, 19,
+                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/settings_button_merged"), (button) -> {
             saveFiles();
             client.setScreen(parent);
         });
-        pullButton = new TexturedButtonWidget(this.i + 237, this.height / 2 - 100, 20, 18,
-                parent instanceof PullItemScreen ? new ButtonTextures(new Identifier(MOD_ID, "button/pull/pull_button_highlighted"), new Identifier(MOD_ID, "button/pull/pull_button_highlighted"))
-                : new ButtonTextures(new Identifier(MOD_ID, "button/pull/pull_button"), new Identifier(MOD_ID, "button/pull/pull_button_highlighted")), (button) -> {
+        pullButton = new TexturedButtonWidget(this.i + 237, this.height / 2 - 100, 20, 18, 0, 0, 19,
+                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/pull_button_merged"), (button) -> {
             saveFiles();
             if(parent instanceof PullItemScreen) client.setScreen(parent);
             else {
@@ -137,7 +132,7 @@ public class SettingsScreen extends Screen {
         textFieldWidgets.get(0).setText(CONFIG.getString("radius"));
         for (int k = 0; k < 2; k++) {
 
-            TextHoverWidget widget = new TextHoverWidget(this.i + 8, this.height / 2 - (78 - 14 * k), 70, 14);
+            HoverWidget widget = new HoverWidget(this.i + 8, this.height / 2 - (78 - 14 * k), 70, 14);
 
             widget.setTooltip(Tooltip.of(Text.translatable("openitempuller.settings_screen.option_" + k + ".tooltip", serverRadius)));
 
