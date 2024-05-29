@@ -39,6 +39,7 @@ public class PullItemsPacket implements FabricPacket {
     }
 
     public static void receiveServer(PullItemsPacket packet, ServerPlayerEntity player, PacketSender sender) {
+        System.out.println("test");
         try {
             NbtCompound compound = packet.nbtCompound;
             if (compound == null) return;

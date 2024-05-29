@@ -17,12 +17,14 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.Nullable;
 
+import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
+
 @Environment(EnvType.CLIENT)
 public class IPCheckboxWidget extends PressableWidget {
-    private static final Identifier SELECTED_HIGHLIGHTED_TEXTURE = new Identifier("widget/checkbox_selected_highlighted");
-    private static final Identifier SELECTED_TEXTURE = new Identifier("widget/checkbox_selected");
-    private static final Identifier HIGHLIGHTED_TEXTURE = new Identifier("widget/checkbox_highlighted");
-    private static final Identifier TEXTURE = new Identifier("widget/checkbox");
+    private static final Identifier SELECTED_HIGHLIGHTED_TEXTURE = new Identifier(MOD_ID, "textures/gui/sprites/button/checkbox/checkbox_selected_highlighted.png");
+    private static final Identifier SELECTED_TEXTURE = new Identifier(MOD_ID, "textures/gui/sprites/button/checkbox/checkbox_selected.png");
+    private static final Identifier HIGHLIGHTED_TEXTURE = new Identifier(MOD_ID, "textures/gui/sprites/button/checkbox/checkbox_highlighted.png");
+    private static final Identifier TEXTURE = new Identifier(MOD_ID, "textures/gui/sprites/button/checkbox/checkbox.png");
     private boolean checked;
     private final IPCheckboxWidget.Callback callback;
 
@@ -80,7 +82,7 @@ public class IPCheckboxWidget extends PressableWidget {
         int i = getSize();
         int j = this.getX() + i + 4;
         int k = this.getY() + (this.height >> 1) - (9 >> 1);
-        context.drawTexture(identifier, this.getX(), this.getY(), 0, 0, i, i);
+        context.drawTexture(identifier, this.getX(), this.getY(), 0, 0, i, i, 12, 12);
         context.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         context.drawTextWithShadow(textRenderer, this.getMessage(), j, k, 14737632 | MathHelper.ceil(this.alpha * 255.0F) << 24);
     }

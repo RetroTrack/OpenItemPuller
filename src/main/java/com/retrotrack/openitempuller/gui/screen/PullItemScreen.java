@@ -1,5 +1,6 @@
 package com.retrotrack.openitempuller.gui.screen;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.retrotrack.openitempuller.gui.widget.IPCheckboxWidget;
 import com.retrotrack.openitempuller.gui.widget.VerticalScrollbarWidget;
 import com.retrotrack.openitempuller.gui.widget.hover.HoverWidget;
@@ -129,6 +130,7 @@ public class PullItemScreen extends Screen {
         assert this.client != null;
         if (this.client.world != null) {
             context.fillGradient(0, 0, this.width, this.height, -1072689136, -804253680);
+            RenderSystem.enableBlend();
             context.drawTexture(TEXTURE, this.i, this.j - 8, 0, 0, this.backgroundWidth, this.backgroundHeight, backgroundWidth, backgroundHeight);
         } else {
             this.renderBackgroundTexture(context);
@@ -137,6 +139,7 @@ public class PullItemScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        renderBackground(context);
         super.render(context, mouseX, mouseY, delta);
         IntStream.range(0, itemSelectTexts.size()).forEach(k -> context.drawText(textRenderer, itemSelectTexts.get(k), this.i + 22, this.height / 2 - (75 - 14 * k), 0xffffff, true));
         context.drawText(textRenderer, Text.translatable("openitempuller.pull_screen.top_names"), this.i + 105, this.height / 2 - 74, 0xffffff, true);
@@ -212,18 +215,18 @@ public class PullItemScreen extends Screen {
     private void addButtons() {
         if (this.client == null) return;
         settingsButton = new TexturedButtonWidget(this.i + 217, this.height / 2 - 100, 20, 18, 0, 0, 19,
-                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/settings_button_merged"), (button) -> client.setScreen(new SettingsScreen(this, serverRadius)));
+                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/settings_button_merged.png"), (button) -> client.setScreen(new SettingsScreen(this, serverRadius)));
         pullButton = new TexturedButtonWidget(this.i + 237, this.height / 2 - 100, 20, 18, 0, 0, 19,
-                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/pull_button_merged"), (button) -> client.setScreen(parent));
+                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/pull_button_merged.png"), (button) -> client.setScreen(parent));
 
         for (int k = 0; k < Math.min(12, filteredList.size()); k++) {
             int finalK = k;
             if(k+ offset >= filteredList.size()) continue;
             Item item = filteredList.get(k + offset);
 
-            TexturedButtonWidget widget = new TexturedButtonWidget(this.i + 5, this.height / 2 - (78 - 14 * k), 88, (k > 10) ? 2 : 14,
+            TexturedButtonWidget widget = new TexturedButtonWidget(this.i + 5, this.height / 2 - (78 - 14 * k), 88, (k > 10) ? 2 : 14, 0,
                     item == selectedItem ? 15 : 0, item == selectedItem ? 15 : 30
-                    ,new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/item_select_button_merged"),
+                    ,new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/item_select_button_merged.png"),
                     (button) -> initButtons(finalK + offset, true, false)) {
                 @Override
                 public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
@@ -246,14 +249,14 @@ public class PullItemScreen extends Screen {
         for (int k = 0; k < chestsWithItem.size(); k++) {
             if(k < 10) {
                 HoverWidget widget = new HoverWidget(
-                        this.i + 105, this.height / 2 - (64 - 14 * k), 65, 14);
+                        this.i + 105, this.height / 2 - (63 - 14 * k), 65, 14);
                 widget.setTooltip(Tooltip.of(Text.literal(chestsWithItem.get(k).name())));
                 itemCountTexts.add(Text.literal(String.valueOf(chestsWithItem.get(k).items().get(selectedItem))));
                 chestsDisplayHovers.add(widget);
                 chestDisplayTexts.add(Text.literal(StringUtils.abbreviate(chestsWithItem.get(k).name(), 10)));
-                textFieldWidgets.add(new TextFieldWidget(textRenderer,this.i + 205, this.height / 2 - (64 - 14 * k),32, 12, Text.literal("")));
+                textFieldWidgets.add(new TextFieldWidget(textRenderer,this.i + 205, this.height / 2 - (63 - 14 * k),32, 12, Text.literal("")));
                 int finalK = k;
-                checkBoxWidgets.add(IPCheckboxWidget.builder(Text.literal(""), textRenderer).callback((checkbox, checked) -> textFieldWidgets.get(finalK).setText(checked ? String.valueOf(chestsWithItem.get(finalK).items().get(selectedItem)) :  "")).pos(this.i + 240, this.height / 2 - (64 - 14 * k)).build());
+                checkBoxWidgets.add(IPCheckboxWidget.builder(Text.literal(""), textRenderer).callback((checkbox, checked) -> textFieldWidgets.get(finalK).setText(checked ? String.valueOf(chestsWithItem.get(finalK).items().get(selectedItem)) :  "")).pos(this.i + 240, this.height / 2 - (63 - 14 * k)).build());
             }
         }
     }

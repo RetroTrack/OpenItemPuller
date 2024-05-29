@@ -31,26 +31,32 @@ import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
 @Mixin(HandledScreen.class)
 public abstract class HandledScreenMixin extends Screen {
     // Fields shadowed from the parent class
-    @Shadow protected int backgroundHeight;
+    @Shadow
+    protected int backgroundHeight;
     @Final
-    @Shadow protected ScreenHandler handler;
-    @Shadow protected int x;
+    @Shadow
+    protected ScreenHandler handler;
+    @Shadow
+    protected int x;
 
     // Unique fields for this mixin
-    @Unique private TexturedButtonWidget pullButton;
-    @Unique private TexturedButtonWidget settingsButton;
-    @Unique private int lastX;
+    @Unique
+    private TexturedButtonWidget pullButton;
+    @Unique
+    private TexturedButtonWidget settingsButton;
+    @Unique
+    private int lastX;
 
     protected HandledScreenMixin(Text title) {
         super(title);
     }
 
-    // Injecting code to render the buttons
+    // Injecting code to render the buttons compared to recipe menu
     @Inject(method = "render", at = @At("TAIL"))
     public void render(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         // Skip rendering if the screen is a creative inventory screen
         if (this.handler instanceof CreativeInventoryScreen.CreativeScreenHandler) return;
-        // Adjust button positions if the screen has been scrolled horizontally
+        // Adjust button positions if recipe menu has been opened
         if (lastX != x) {
             lastX = x;
             settingsButton.setPosition(this.x + 134, (this.height / 2 - this.backgroundHeight / 2 - (this.handler instanceof ShulkerBoxScreenHandler || this.handler instanceof HopperScreenHandler ? 18 : 17)));
@@ -73,16 +79,15 @@ public abstract class HandledScreenMixin extends Screen {
         // Return if client instance is null
         if (this.client == null) return;
         // Create settings button and attach action for opening settings screen
-        client.player.sendMessage(Text.literal("tests"));
         settingsButton = this.addDrawableChild(new TexturedButtonWidget(this.x + 134, (this.height / 2 - this.backgroundHeight / 2 - (this.handler instanceof ShulkerBoxScreenHandler || this.handler instanceof HopperScreenHandler ? 18 : 17)), 20, 18,
                 0, 0, 19,
-                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/settings_button_merged"), (button) -> {
+                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/settings_button_merged.png"), (button) -> {
             OpenSettingsScreenPacket openSettingsScreenPacket = new OpenSettingsScreenPacket(-1);
             ClientPlayNetworking.send(openSettingsScreenPacket);
         }));
 
         pullButton = this.addDrawableChild(new TexturedButtonWidget(this.x + 154, (this.height / 2 - this.backgroundHeight / 2 - (this.handler instanceof ShulkerBoxScreenHandler || this.handler instanceof HopperScreenHandler ? 18 : 17)), 20, 18, 0, 0, 19,
-                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/pull_button_merged"), (button) -> {
+                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/pull_button_merged.png"), (button) -> {
             // Send Check Chest Packet
             CheckChestPacket checkChestPacket = new CheckChestPacket(ItemPuller.CONFIG.getInteger("radius"));
             ClientPlayNetworking.send(checkChestPacket);

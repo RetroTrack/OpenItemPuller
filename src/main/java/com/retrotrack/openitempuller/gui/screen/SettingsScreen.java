@@ -1,5 +1,6 @@
 package com.retrotrack.openitempuller.gui.screen;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.retrotrack.openitempuller.ItemPuller;
 import com.retrotrack.openitempuller.config.ItemPullerConfig;
 import com.retrotrack.openitempuller.gui.widget.hover.HoverWidget;
@@ -9,6 +10,7 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.advancement.AdvancementsScreen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -81,6 +83,7 @@ public class SettingsScreen extends Screen {
         assert this.client != null;
         if (this.client.world != null) {
             context.fillGradient(0, 0, this.width, this.height, -1072689136, -804253680);
+            RenderSystem.enableBlend();
             context.drawTexture(TEXTURE, this.i, this.j - 8, 0, 0, this.backgroundWidth, this.backgroundHeight, backgroundWidth, backgroundHeight);
         } else {
             this.renderBackgroundTexture(context);
@@ -89,6 +92,7 @@ public class SettingsScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        renderBackground(context);
         super.render(context, mouseX, mouseY, delta);
         IntStream.range(0, textWidgets.size()).forEach(k -> context.drawText(textRenderer, textWidgets.get(k), this.i + 10, this.height / 2 - (75 - 16 * k), 0xffffff, true));
 
@@ -107,12 +111,12 @@ public class SettingsScreen extends Screen {
 
 
         settingsButton = new TexturedButtonWidget(this.i + 217, this.height / 2 - 100, 20, 18, 0, 0, 19,
-                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/settings_button_merged"), (button) -> {
+                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/settings_button_merged.png"), (button) -> {
             saveFiles();
             client.setScreen(parent);
         });
         pullButton = new TexturedButtonWidget(this.i + 237, this.height / 2 - 100, 20, 18, 0, 0, 19,
-                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/pull_button_merged"), (button) -> {
+                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/pull_button_merged.png"), (button) -> {
             saveFiles();
             if(parent instanceof PullItemScreen) client.setScreen(parent);
             else {
