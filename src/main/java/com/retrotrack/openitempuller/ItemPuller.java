@@ -15,6 +15,7 @@ public class ItemPuller implements ModInitializer {
      */
     @Override
     public void onInitialize() {
+
         initConfig();
         registerServerPackets();
     }

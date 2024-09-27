@@ -43,8 +43,6 @@ public abstract class HandledScreenMixin extends Screen {
     @Unique
     private TexturedButtonWidget pullButton;
     @Unique
-    private TexturedButtonWidget settingsButton;
-    @Unique
     private int lastX;
 
     protected HandledScreenMixin(Text title) {
@@ -59,7 +57,6 @@ public abstract class HandledScreenMixin extends Screen {
         // Adjust button positions if recipe menu has been opened
         if (lastX != x) {
             lastX = x;
-            settingsButton.setPosition(this.x + 134, (this.height / 2 - this.backgroundHeight / 2 - (this.handler instanceof ShulkerBoxScreenHandler || this.handler instanceof HopperScreenHandler ? 18 : 17)));
             pullButton.setPosition(this.x + 154, (this.height / 2 - this.backgroundHeight / 2 - (this.handler instanceof ShulkerBoxScreenHandler || this.handler instanceof HopperScreenHandler ? 18 : 17)));
         }
     }
@@ -79,12 +76,6 @@ public abstract class HandledScreenMixin extends Screen {
         // Return if client instance is null
         if (this.client == null) return;
         // Create settings button and attach action for opening settings screen
-        settingsButton = this.addDrawableChild(new TexturedButtonWidget(this.x + 134, (this.height / 2 - this.backgroundHeight / 2 - (this.handler instanceof ShulkerBoxScreenHandler || this.handler instanceof HopperScreenHandler ? 18 : 17)), 20, 18,
-                0, 0, 19,
-                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/settings_button_merged.png"), (button) -> {
-            OpenSettingsScreenPacket openSettingsScreenPacket = new OpenSettingsScreenPacket(-1);
-            ClientPlayNetworking.send(openSettingsScreenPacket);
-        }));
 
         pullButton = this.addDrawableChild(new TexturedButtonWidget(this.x + 154, (this.height / 2 - this.backgroundHeight / 2 - (this.handler instanceof ShulkerBoxScreenHandler || this.handler instanceof HopperScreenHandler ? 18 : 17)), 20, 18, 0, 0, 19,
                 new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/pull_button_merged.png"), (button) -> {
