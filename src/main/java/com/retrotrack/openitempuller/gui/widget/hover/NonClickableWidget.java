@@ -1,8 +1,15 @@
+/*
+ * Decompiled with CFR 0.2.2 (FabricMC 7c48b8c4).
+ */
 package com.retrotrack.openitempuller.gui.widget.hover;
 
+import java.time.Duration;
 import java.util.function.Consumer;
+
+import com.retrotrack.openitempuller.gui.widget.hover.IPWidget;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Drawable;
@@ -14,6 +21,11 @@ import net.minecraft.client.gui.navigation.GuiNavigationPath;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.screen.narration.NarrationPart;
 import net.minecraft.client.gui.tooltip.Tooltip;
+import net.minecraft.client.gui.tooltip.TooltipState;
+import net.minecraft.client.gui.widget.Widget;
+import net.minecraft.client.sound.PositionedSoundInstance;
+import net.minecraft.client.sound.SoundManager;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Util;
@@ -25,8 +37,12 @@ import org.jetbrains.annotations.Nullable;
  * mouse actions. In addition, it allows a message to be rendered on the widget
  * and narrated when the widget is selected.
  */
-@Environment(EnvType.CLIENT)
-public abstract class NonClickableWidget implements Drawable, Element, IPWidget, Selectable {
+@Environment(value=EnvType.CLIENT)
+public abstract class NonClickableWidget
+        implements Drawable,
+        Element,
+        IPWidget,
+        Selectable {
     protected int width;
     protected int height;
     private int x;
@@ -35,11 +51,10 @@ public abstract class NonClickableWidget implements Drawable, Element, IPWidget,
     protected boolean hovered;
     public boolean active = true;
     public boolean visible = true;
-    protected float alpha = 1.0F;
+    protected float alpha = 1.0f;
     private int navigationOrder;
     private boolean focused;
-    @Nullable
-    private Tooltip tooltip;
+    private final TooltipState tooltip = new TooltipState();
 
     public NonClickableWidget(int x, int y, int width, int height, Text message) {
         this.x = x;
@@ -56,55 +71,50 @@ public abstract class NonClickableWidget implements Drawable, Element, IPWidget,
 
     @Override
     public final void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        if (this.visible) {
-            this.hovered = mouseX >= this.getX() && mouseY >= this.getY() && mouseX < this.getX() + this.width && mouseY < this.getY() + this.height;
-            this.renderWidget(context, mouseX, mouseY, delta);
-            if (this.tooltip != null) {
-                this.tooltip.render(this.isHovered(), this.isFocused(), this.getNavigationFocus());
-            }
+        if (!this.visible) {
+            return;
         }
+        this.hovered = context.scissorContains(mouseX, mouseY) && mouseX >= this.getX() && mouseY >= this.getY() && mouseX < this.getX() + this.width && mouseY < this.getY() + this.height;
+        this.renderWidget(context, mouseX, mouseY, delta);
+        this.tooltip.render(this.isHovered(), this.isFocused(), this.getNavigationFocus());
     }
 
     public void setTooltip(@Nullable Tooltip tooltip) {
-        this.tooltip = tooltip;
+        this.tooltip.setTooltip(tooltip);
     }
 
     @Nullable
     public Tooltip getTooltip() {
-        return this.tooltip;
+        return this.tooltip.getTooltip();
     }
 
-    public void setTooltipDelay(int delay) {
-        if (this.tooltip != null) {
-            this.tooltip.setDelay(delay);
-        }
+    public void setTooltipDelay(Duration tooltipDelay) {
+        this.tooltip.setDelay(tooltipDelay);
     }
 
     protected MutableText getNarrationMessage() {
-        return getNarrationMessage(this.getMessage());
+        return NonClickableWidget.getNarrationMessage(this.getMessage());
     }
 
     public static MutableText getNarrationMessage(Text message) {
         return Text.translatable("gui.narrate.button", message);
     }
 
-    protected abstract void renderWidget(DrawContext context, int mouseX, int mouseY, float delta);
+    protected abstract void renderWidget(DrawContext var1, int var2, int var3, float var4);
 
     protected static void drawScrollableText(DrawContext context, TextRenderer textRenderer, Text text, int startX, int startY, int endX, int endY, int color) {
-        drawScrollableText(context, textRenderer, text, (startX + endX) / 2, startX, startY, endX, endY, color);
+        NonClickableWidget.drawScrollableText(context, textRenderer, text, (startX + endX) / 2, startX, startY, endX, endY, color);
     }
 
-    protected static void drawScrollableText(
-            DrawContext context, TextRenderer textRenderer, Text text, int centerX, int startX, int startY, int endX, int endY, int color
-    ) {
+    protected static void drawScrollableText(DrawContext context, TextRenderer textRenderer, Text text, int centerX, int startX, int startY, int endX, int endY, int color) {
         int i = textRenderer.getWidth(text);
-        int j = (startY + endY - 9) / 2 + 1;
+        int j = (startY + endY - textRenderer.fontHeight) / 2 + 1;
         int k = endX - startX;
         if (i > k) {
             int l = i - k;
             double d = (double)Util.getMeasuringTimeMs() / 1000.0;
             double e = Math.max((double)l * 0.5, 3.0);
-            double f = Math.sin((Math.PI / 2) * Math.cos((Math.PI * 2) * d / e)) / 2.0 + 0.5;
+            double f = Math.sin(1.5707963267948966 * Math.cos(Math.PI * 2 * d / e)) / 2.0 + 0.5;
             double g = MathHelper.lerp(f, 0.0, (double)l);
             context.enableScissor(startX, startY, endX, endY);
             context.drawTextWithShadow(textRenderer, text, startX - (int)g, j, color);
@@ -118,7 +128,7 @@ public abstract class NonClickableWidget implements Drawable, Element, IPWidget,
     protected void drawScrollableText(DrawContext context, TextRenderer textRenderer, int xMargin, int color) {
         int i = this.getX() + xMargin;
         int j = this.getX() + this.getWidth() - xMargin;
-        drawScrollableText(context, textRenderer, this.getMessage(), i, this.getY(), j, this.getY() + this.getHeight(), color);
+        NonClickableWidget.drawScrollableText(context, textRenderer, this.getMessage(), i, this.getY(), j, this.getY() + this.getHeight(), color);
     }
 
     public void onClick(double mouseX, double mouseY) {
@@ -132,6 +142,15 @@ public abstract class NonClickableWidget implements Drawable, Element, IPWidget,
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        boolean bl;
+        if (!this.active || !this.visible) {
+            return false;
+        }
+        if (this.isValidClickButton(button) && (bl = this.clicked(mouseX, mouseY))) {
+            this.playDownSound(MinecraftClient.getInstance().getSoundManager());
+            this.onClick(mouseX, mouseY);
+            return true;
+        }
         return false;
     }
 
@@ -140,9 +159,8 @@ public abstract class NonClickableWidget implements Drawable, Element, IPWidget,
         if (this.isValidClickButton(button)) {
             this.onRelease(mouseX, mouseY);
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     protected boolean isValidClickButton(int button) {
@@ -154,33 +172,33 @@ public abstract class NonClickableWidget implements Drawable, Element, IPWidget,
         if (this.isValidClickButton(button)) {
             this.onDrag(mouseX, mouseY, deltaX, deltaY);
             return true;
-        } else {
-            return false;
         }
-    }
-
-    protected boolean clicked(double mouseX, double mouseY) {
         return false;
     }
 
-    @Nullable
+    protected boolean clicked(double mouseX, double mouseY) {
+        return this.active && this.visible && mouseX >= (double)this.getX() && mouseY >= (double)this.getY() && mouseX < (double)(this.getX() + this.getWidth()) && mouseY < (double)(this.getY() + this.getHeight());
+    }
+
     @Override
+    @Nullable
     public GuiNavigationPath getNavigationPath(GuiNavigation navigation) {
         if (!this.active || !this.visible) {
             return null;
-        } else {
-            return !this.isFocused() ? GuiNavigationPath.of(this) : null;
         }
+        if (!this.isFocused()) {
+            return GuiNavigationPath.of(this);
+        }
+        return null;
     }
 
     @Override
     public boolean isMouseOver(double mouseX, double mouseY) {
-        return this.active
-                && this.visible
-                && mouseX >= (double)this.getX()
-                && mouseY >= (double)this.getY()
-                && mouseX < (double)(this.getX() + this.width)
-                && mouseY < (double)(this.getY() + this.height);
+        return this.active && this.visible && mouseX >= (double)this.getX() && mouseY >= (double)this.getY() && mouseX < (double)(this.getX() + this.width) && mouseY < (double)(this.getY() + this.height);
+    }
+
+    public void playDownSound(SoundManager soundManager) {
+        soundManager.play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0f));
     }
 
     @Override
@@ -235,28 +253,28 @@ public abstract class NonClickableWidget implements Drawable, Element, IPWidget,
     public Selectable.SelectionType getType() {
         if (this.isFocused()) {
             return Selectable.SelectionType.FOCUSED;
-        } else {
-            return this.hovered ? Selectable.SelectionType.HOVERED : Selectable.SelectionType.NONE;
         }
+        if (this.hovered) {
+            return Selectable.SelectionType.HOVERED;
+        }
+        return Selectable.SelectionType.NONE;
     }
 
     @Override
     public final void appendNarrations(NarrationMessageBuilder builder) {
         this.appendClickableNarrations(builder);
-        if (this.tooltip != null) {
-            this.tooltip.appendNarrations(builder);
-        }
+        this.tooltip.appendNarrations(builder);
     }
 
-    protected abstract void appendClickableNarrations(NarrationMessageBuilder builder);
+    protected abstract void appendClickableNarrations(NarrationMessageBuilder var1);
 
     protected void appendDefaultNarrations(NarrationMessageBuilder builder) {
-        builder.put(NarrationPart.TITLE, this.getNarrationMessage());
+        builder.put(NarrationPart.TITLE, (Text)this.getNarrationMessage());
         if (this.active) {
             if (this.isFocused()) {
-                builder.put(NarrationPart.USAGE, Text.translatable("narration.button.usage.focused"));
+                builder.put(NarrationPart.USAGE, (Text)Text.translatable("narration.button.usage.focused"));
             } else {
-                builder.put(NarrationPart.USAGE, Text.translatable("narration.button.usage.hovered"));
+                builder.put(NarrationPart.USAGE, (Text)Text.translatable("narration.button.usage.hovered"));
             }
         }
     }
@@ -318,3 +336,4 @@ public abstract class NonClickableWidget implements Drawable, Element, IPWidget,
         this.navigationOrder = navigationOrder;
     }
 }
+

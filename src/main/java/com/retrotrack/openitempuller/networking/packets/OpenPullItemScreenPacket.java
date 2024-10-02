@@ -16,7 +16,7 @@ import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
 
 public class OpenPullItemScreenPacket implements FabricPacket {
     public static final PacketType<OpenPullItemScreenPacket> TYPE = PacketType.create(
-            new Identifier(MOD_ID, "open_pull_screen"),
+            Identifier.of(MOD_ID, "open_pull_screen"),
             OpenPullItemScreenPacket::new
     );
 

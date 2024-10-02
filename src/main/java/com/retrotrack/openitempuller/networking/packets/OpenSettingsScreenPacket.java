@@ -13,7 +13,7 @@ import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
 
 public class OpenSettingsScreenPacket implements FabricPacket {
     public static final PacketType<OpenSettingsScreenPacket> TYPE = PacketType.create(
-            new Identifier(MOD_ID, "open_settings_screen"),
+            Identifier.of(MOD_ID, "open_settings_screen"),
             OpenSettingsScreenPacket::new
     );
     public final int radius;

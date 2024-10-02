@@ -43,7 +43,6 @@ public abstract class HandledScreenMixin extends Screen {
 
     // Unique fields for this mixin
     @Unique private TexturedButtonWidget pullButton;
-    @Unique private TexturedButtonWidget settingsButton;
     @Unique private int lastX;
 
     protected HandledScreenMixin(Text title) {
@@ -58,8 +57,8 @@ public abstract class HandledScreenMixin extends Screen {
         // Adjust button positions if the screen has been scrolled horizontally
         if (lastX != x) {
             lastX = x;
-            settingsButton.setPosition(this.x + 134, (this.height / 2 - this.backgroundHeight / 2 - (this.handler instanceof ShulkerBoxScreenHandler || this.handler instanceof HopperScreenHandler ? 18 : 17)));
-            pullButton.setPosition(this.x + 154, (this.height / 2 - this.backgroundHeight / 2 - (this.handler instanceof ShulkerBoxScreenHandler || this.handler instanceof HopperScreenHandler ? 18 : 17)));
+            pullButton.setPosition(this.x + 154, (this.height / 2 - this.backgroundHeight / 2
+                    - (this.handler instanceof ShulkerBoxScreenHandler || this.handler instanceof HopperScreenHandler ? 18 : 17)));
         }
     }
 
@@ -77,16 +76,9 @@ public abstract class HandledScreenMixin extends Screen {
     private void renderPullButton() {
         // Return if client instance is null
         if (this.client == null) return;
-        // Create settings button and attach action for opening settings screen
-        settingsButton = this.addDrawableChild(new TexturedButtonWidget(this.x + 134, (this.height / 2 - this.backgroundHeight / 2 - (this.handler instanceof ShulkerBoxScreenHandler || this.handler instanceof HopperScreenHandler ? 18 : 17)), 20, 18,
-                new ButtonTextures(new Identifier(MOD_ID, "button/settings/settings_button"/*default*/), new Identifier(MOD_ID, "button/settings/settings_button_highlighted"/*highlighted*/)),
-                (button) -> {
-                    OpenSettingsScreenPacket openSettingsScreenPacket = new OpenSettingsScreenPacket(-1);
-                    ClientPlayNetworking.send(openSettingsScreenPacket);
-                }));
         // Create pull button and attach action for checking chests
         pullButton = this.addDrawableChild(new TexturedButtonWidget(this.x + 154, (this.height / 2 - this.backgroundHeight / 2 - (this.handler instanceof ShulkerBoxScreenHandler || this.handler instanceof HopperScreenHandler ? 18 : 17)), 20, 18,
-                new ButtonTextures(new Identifier(MOD_ID, "button/pull/pull_button"/*default*/), new Identifier(MOD_ID, "button/pull/pull_button_highlighted"/*highlighted*/)), (button) -> {
+                new ButtonTextures(Identifier.of(MOD_ID, "button/pull/pull_button"/*default*/), Identifier.of(MOD_ID, "button/pull/pull_button_highlighted"/*highlighted*/)), (button) -> {
             // Send Check Chest Packet
             CheckChestPacket checkChestPacket = new CheckChestPacket(ItemPuller.CONFIG.getInteger("radius"));
             ClientPlayNetworking.send(checkChestPacket);

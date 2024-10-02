@@ -26,7 +26,7 @@ public class ChestConnectionChecker {
             case SOUTH -> connectedChestPos = chestType.equals(ChestType.LEFT) ? chestPos.offset(Direction.WEST) : chestPos.offset(Direction.EAST);
             case WEST -> connectedChestPos = chestType.equals(ChestType.LEFT) ? chestPos.offset(Direction.NORTH) : chestPos.offset(Direction.SOUTH);
             default -> {
-                return null; // Return null if facing direction is unknown
+                return null; // Facing direction is unknown
             }
         }
 

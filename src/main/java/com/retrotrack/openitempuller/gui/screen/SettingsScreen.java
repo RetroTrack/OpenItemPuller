@@ -32,7 +32,7 @@ public class SettingsScreen extends Screen {
     //Screen Constants
     protected int backgroundWidth = 259;
     protected int backgroundHeight = 182;
-    private static final Identifier TEXTURE = new Identifier(MOD_ID, "textures/gui/screen/settings_screen.png");
+    private static final Identifier TEXTURE = Identifier.of(MOD_ID, "textures/gui/screen/settings_screen.png");
     private int i = (this.width - this.backgroundWidth) / 2;
     private int j = (this.height - this.backgroundHeight) / 2;
     private final Screen parent;
@@ -88,7 +88,7 @@ public class SettingsScreen extends Screen {
             this.renderInGameBackground(context);
             context.drawTexture(TEXTURE, this.i, this.j - 8, 0, 0, this.backgroundWidth, this.backgroundHeight, backgroundWidth, backgroundHeight);
         } else {
-            this.renderBackgroundTexture(context);
+            this.renderDarkening(context);
         }
     }
 
@@ -111,13 +111,13 @@ public class SettingsScreen extends Screen {
         if (this.client == null) return;
 
         settingsButton = new TexturedButtonWidget(this.i + 217, this.height / 2 - 100, 20, 18,
-                new ButtonTextures(new Identifier(MOD_ID, "button/settings/settings_button_highlighted"), new Identifier(MOD_ID, "button/settings/settings_button_highlighted")), (button) -> {
+                new ButtonTextures(Identifier.of(MOD_ID, "button/settings/settings_button_highlighted"), Identifier.of(MOD_ID, "button/settings/settings_button_highlighted")), (button) -> {
             saveFiles();
             client.setScreen(parent);
         });
         pullButton = new TexturedButtonWidget(this.i + 237, this.height / 2 - 100, 20, 18,
-                parent instanceof PullItemScreen ? new ButtonTextures(new Identifier(MOD_ID, "button/pull/pull_button_highlighted"), new Identifier(MOD_ID, "button/pull/pull_button_highlighted"))
-                : new ButtonTextures(new Identifier(MOD_ID, "button/pull/pull_button"), new Identifier(MOD_ID, "button/pull/pull_button_highlighted")), (button) -> {
+                parent instanceof PullItemScreen ? new ButtonTextures(Identifier.of(MOD_ID, "button/pull/pull_button_highlighted"), Identifier.of(MOD_ID, "button/pull/pull_button_highlighted"))
+                : new ButtonTextures(Identifier.of(MOD_ID, "button/pull/pull_button"), Identifier.of(MOD_ID, "button/pull/pull_button_highlighted")), (button) -> {
             saveFiles();
             if(parent instanceof PullItemScreen) client.setScreen(parent);
             else {

@@ -19,7 +19,7 @@ import net.minecraft.util.math.MathHelper;
 @Environment(EnvType.CLIENT)
 public abstract class NonPressableWidget extends NonClickableWidget {
     private static final ButtonTextures TEXTURES = new ButtonTextures(
-            new Identifier("widget/button"), new Identifier("widget/button_disabled"), new Identifier("widget/button_highlighted")
+            Identifier.of("widget/button"), Identifier.of("widget/button_disabled"), Identifier.of("widget/button_highlighted")
     );
 
     public NonPressableWidget(int i, int j, int k, int l, Text text) {

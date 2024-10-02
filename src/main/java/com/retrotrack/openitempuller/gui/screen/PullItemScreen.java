@@ -46,7 +46,7 @@ public class PullItemScreen extends Screen {
     //Screen Constants
     protected final int backgroundWidth = 259;
     protected final int backgroundHeight = 182;
-    private static final Identifier TEXTURE = new Identifier(MOD_ID, "textures/gui/screen/pull_item_screen.png");
+    private static final Identifier TEXTURE = Identifier.of(MOD_ID, "textures/gui/screen/pull_item_screen.png");
     private int i = (this.width - this.backgroundWidth) / 2;
     private int j = (this.height - this.backgroundHeight) / 2;
     private final Screen parent;
@@ -138,7 +138,7 @@ public class PullItemScreen extends Screen {
             this.renderInGameBackground(context);
             context.drawTexture(TEXTURE, this.i, this.j - 8, 0, 0, this.backgroundWidth, this.backgroundHeight, backgroundWidth, backgroundHeight);
         } else {
-            this.renderBackgroundTexture(context);
+//            this.renderBackgroundTexture(context);
         }
     }
 
@@ -219,18 +219,18 @@ public class PullItemScreen extends Screen {
     private void addButtons() {
         if (this.client == null) return;
         settingsButton = new TexturedButtonWidget(this.i + 217, this.height / 2 - 100, 20, 18,
-                new ButtonTextures(new Identifier(MOD_ID, "button/settings/settings_button"), new Identifier(MOD_ID, "button/settings/settings_button")), (button) -> client.setScreen(new SettingsScreen(this, serverRadius)));
+                new ButtonTextures(Identifier.of(MOD_ID, "button/settings/settings_button"), Identifier.of(MOD_ID, "button/settings/settings_button")), (button) -> client.setScreen(new SettingsScreen(this, serverRadius)));
         pullButton = new TexturedButtonWidget(this.i + 237, this.height / 2 - 100, 20, 18,
-                new ButtonTextures(new Identifier(MOD_ID, "button/pull/pull_button_highlighted"), new Identifier(MOD_ID, "button/pull/pull_button_highlighted")), (button) -> client.setScreen(parent));
+                new ButtonTextures(Identifier.of(MOD_ID, "button/pull/pull_button_highlighted"), Identifier.of(MOD_ID, "button/pull/pull_button_highlighted")), (button) -> client.setScreen(parent));
 
         for (int k = 0; k < Math.min(12, filteredList.size()); k++) {
             int finalK = k;
             if(k+ offset >= filteredList.size()) continue;
             Item item = filteredList.get(k + offset);
-            ButtonTextures textures = new ButtonTextures(new Identifier(MOD_ID, "button/item_select/item_select_button"), new Identifier(MOD_ID, "button/pull/item_select_button_highlighted"),
-                    new Identifier(MOD_ID, "button/item_select/item_select_button_highlighted"), new Identifier(MOD_ID, "button/item_select/item_select_button_highlighted"));
-            ButtonTextures texturesSelected = new ButtonTextures(new Identifier(MOD_ID, "button/item_select/item_select_button_selected"), new Identifier(MOD_ID, "button/pull/item_select_button_selected"),
-                    new Identifier(MOD_ID, "button/item_select/item_select_button_selected"), new Identifier(MOD_ID, "button/item_select/item_select_button_selected"));
+            ButtonTextures textures = new ButtonTextures(Identifier.of(MOD_ID, "button/item_select/item_select_button"), Identifier.of(MOD_ID, "button/pull/item_select_button_highlighted"),
+                    Identifier.of(MOD_ID, "button/item_select/item_select_button_highlighted"), Identifier.of(MOD_ID, "button/item_select/item_select_button_highlighted"));
+            ButtonTextures texturesSelected = new ButtonTextures(Identifier.of(MOD_ID, "button/item_select/item_select_button_selected"), Identifier.of(MOD_ID, "button/pull/item_select_button_selected"),
+                    Identifier.of(MOD_ID, "button/item_select/item_select_button_selected"), Identifier.of(MOD_ID, "button/item_select/item_select_button_selected"));
             TexturedButtonWidget widget = new TexturedButtonWidget(this.i + 5, this.height / 2 - (78 - 14 * k), 88, (k > 10) ? 2 : 14,
                     item == selectedItem ? texturesSelected : textures,
                     (button) -> initButtons(finalK + offset, true, false)) {

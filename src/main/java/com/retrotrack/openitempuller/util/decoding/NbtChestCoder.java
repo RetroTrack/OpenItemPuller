@@ -1,12 +1,10 @@
 package com.retrotrack.openitempuller.util.decoding;
 
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.block.entity.HopperBlockEntity;
 import net.minecraft.block.entity.LockableContainerBlockEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -136,7 +134,7 @@ public class NbtChestCoder {
 
             HashMap<Item, Integer> map = new HashMap<>();
             for (int itemIndex = 0; itemIndex < itemListSize; itemIndex++) {
-                Item item = Registries.ITEM.get(new Identifier(itemList.getString("item_" + itemIndex)));
+                Item item = Registries.ITEM.get(Identifier.of(itemList.getString("item_" + itemIndex)));
                 map.put(item, itemList.getInt("item_" + itemIndex + "_amount"));
             }
 

@@ -15,7 +15,7 @@ import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
 @Environment(EnvType.CLIENT)
 public class VerticalScrollbarWidget extends ClickableWidget {
 
-    private static final Identifier TEXTURE = new Identifier(MOD_ID, "textures/gui/sprites/button/scrollbar/scrollbar.png");
+    private static final Identifier TEXTURE = Identifier.of(MOD_ID, "textures/gui/sprites/button/scrollbar/scrollbar.png");
 
     private final int x;
     private final int y;

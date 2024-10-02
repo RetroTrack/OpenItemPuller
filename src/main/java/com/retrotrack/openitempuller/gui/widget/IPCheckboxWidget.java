@@ -19,10 +19,10 @@ import org.jetbrains.annotations.Nullable;
 
 @Environment(EnvType.CLIENT)
 public class IPCheckboxWidget extends PressableWidget {
-    private static final Identifier SELECTED_HIGHLIGHTED_TEXTURE = new Identifier("widget/checkbox_selected_highlighted");
-    private static final Identifier SELECTED_TEXTURE = new Identifier("widget/checkbox_selected");
-    private static final Identifier HIGHLIGHTED_TEXTURE = new Identifier("widget/checkbox_highlighted");
-    private static final Identifier TEXTURE = new Identifier("widget/checkbox");
+    private static final Identifier SELECTED_HIGHLIGHTED_TEXTURE = Identifier.of("widget/checkbox_selected_highlighted");
+    private static final Identifier SELECTED_TEXTURE = Identifier.of("widget/checkbox_selected");
+    private static final Identifier HIGHLIGHTED_TEXTURE = Identifier.of("widget/checkbox_highlighted");
+    private static final Identifier TEXTURE = Identifier.of("widget/checkbox");
     private boolean checked;
     private final IPCheckboxWidget.Callback callback;
 

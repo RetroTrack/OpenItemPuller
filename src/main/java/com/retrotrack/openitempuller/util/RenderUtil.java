@@ -12,6 +12,7 @@ import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.PlayerScreenHandler;
+import org.joml.Matrix4fStack;
 
 public class RenderUtil {
 
@@ -23,8 +24,8 @@ public class RenderUtil {
         RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
 
         // Transformation matrix for rendering
-        MatrixStack matrixStack = RenderSystem.getModelViewStack();
-        matrixStack.push();
+        Matrix4fStack matrixStack = RenderSystem.getModelViewStack();
+        matrixStack.pushMatrix();
         matrixStack.translate(x, y, 100.0F);
         matrixStack.scale(1.0F, -1.0F, 1.0F);
         matrixStack.scale(16.0F, 16.0F, 16.0F);
@@ -55,7 +56,7 @@ public class RenderUtil {
         }
 
         // Pop the matrix stack
-        matrixStack.pop();
+        matrixStack.popMatrix();
         RenderSystem.applyModelViewMatrix();
     }
 

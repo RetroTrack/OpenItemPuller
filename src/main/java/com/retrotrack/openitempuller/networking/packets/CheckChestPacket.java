@@ -20,7 +20,7 @@ import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
 public class CheckChestPacket implements FabricPacket {
 
     public static final PacketType<CheckChestPacket> TYPE = PacketType.create(
-            new Identifier(MOD_ID, "check_chests"),
+            Identifier.of(MOD_ID, "check_chests"),
             CheckChestPacket::new
     );
     public final int radius;

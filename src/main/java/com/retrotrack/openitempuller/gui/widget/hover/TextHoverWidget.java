@@ -24,8 +24,8 @@ public class TextHoverWidget extends TextHoverButtonWidget {
     }
     public TextHoverWidget(int x, int y, int width, int height) {
         super(x, y, width, height, ScreenTexts.EMPTY, a -> {}, DEFAULT_NARRATION_SUPPLIER);
-        this.textures = new ButtonTextures(new Identifier(MOD_ID, "button/invisible/invisible"),
-                new Identifier(MOD_ID, "button/invisible/invisible"));
+        this.textures = new ButtonTextures(Identifier.of(MOD_ID, "button/invisible/invisible"),
+                Identifier.of(MOD_ID, "button/invisible/invisible"));
     }
 
     public TextHoverWidget(int width, int height, ButtonTextures textures, TextHoverButtonWidget.PressAction pressAction, Text text) {

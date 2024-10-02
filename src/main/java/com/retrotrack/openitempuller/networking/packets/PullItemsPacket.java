@@ -1,12 +1,9 @@
 package com.retrotrack.openitempuller.networking.packets;
 
-import com.retrotrack.openitempuller.ItemPuller;
 import com.retrotrack.openitempuller.util.ChestFinder;
-import com.retrotrack.openitempuller.util.decoding.NbtChestCoder;
 import net.fabricmc.fabric.api.networking.v1.FabricPacket;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.PacketType;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.block.entity.HopperBlockEntity;
 import net.minecraft.block.entity.LockableContainerBlockEntity;
 import net.minecraft.inventory.Inventory;
@@ -17,15 +14,12 @@ import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-
-import java.util.List;
 
 import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
 
 public class PullItemsPacket implements FabricPacket {
     public static final PacketType<PullItemsPacket> TYPE = PacketType.create(
-            new Identifier(MOD_ID, "pull_items"),
+            Identifier.of(MOD_ID, "pull_items"),
             PullItemsPacket::new
     );
     public final NbtCompound nbtCompound;
