@@ -3,13 +3,10 @@ package com.retrotrack.openitempuller.gui.screen;
 import com.retrotrack.openitempuller.ItemPuller;
 import com.retrotrack.openitempuller.config.ItemPullerConfig;
 import com.retrotrack.openitempuller.gui.widget.hover.TextHoverWidget;
-import com.retrotrack.openitempuller.networking.ModMessages;
-import com.retrotrack.openitempuller.networking.packets.CheckChestPacket;
-import com.retrotrack.openitempuller.networking.packets.PullItemsPacket;
+import com.retrotrack.openitempuller.networking.payloads.CheckChestPayload;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.screen.Screen;
@@ -17,7 +14,6 @@ import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -95,7 +91,8 @@ public class SettingsScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
-        IntStream.range(0, textWidgets.size()).forEach(k -> context.drawText(textRenderer, textWidgets.get(k), this.i + 10, this.height / 2 - (75 - 16 * k), 0xffffff, true));
+        IntStream.range(0, textWidgets.size()).forEach(k -> context.drawText(textRenderer, textWidgets.get(k),
+                this.i + 10, this.height / 2 - (75 - 16 * k), 0xffffff, true));
 
     }
 
@@ -111,18 +108,20 @@ public class SettingsScreen extends Screen {
         if (this.client == null) return;
 
         settingsButton = new TexturedButtonWidget(this.i + 217, this.height / 2 - 100, 20, 18,
-                new ButtonTextures(Identifier.of(MOD_ID, "button/settings/settings_button_highlighted"), Identifier.of(MOD_ID, "button/settings/settings_button_highlighted")), (button) -> {
+                new ButtonTextures(Identifier.of(MOD_ID, "button/settings/settings_button_highlighted"),
+                        Identifier.of(MOD_ID, "button/settings/settings_button_highlighted")), (button) -> {
             saveFiles();
             client.setScreen(parent);
         });
         pullButton = new TexturedButtonWidget(this.i + 237, this.height / 2 - 100, 20, 18,
-                parent instanceof PullItemScreen ? new ButtonTextures(Identifier.of(MOD_ID, "button/pull/pull_button_highlighted"), Identifier.of(MOD_ID, "button/pull/pull_button_highlighted"))
-                : new ButtonTextures(Identifier.of(MOD_ID, "button/pull/pull_button"), Identifier.of(MOD_ID, "button/pull/pull_button_highlighted")), (button) -> {
+                parent instanceof PullItemScreen ? new ButtonTextures(Identifier.of(MOD_ID, "button/pull/pull_button_highlighted"),
+                        Identifier.of(MOD_ID, "button/pull/pull_button_highlighted"))
+                : new ButtonTextures(Identifier.of(MOD_ID, "button/pull/pull_button"),
+                        Identifier.of(MOD_ID, "button/pull/pull_button_highlighted")), (button) -> {
             saveFiles();
             if(parent instanceof PullItemScreen) client.setScreen(parent);
             else {
-                CheckChestPacket checkChestPacket = new CheckChestPacket(ItemPuller.CONFIG.getInteger("radius"));
-                ClientPlayNetworking.send(checkChestPacket);
+                ClientPlayNetworking.send(new CheckChestPayload(ItemPuller.CONFIG.getInteger("radius")));
             }
         });
 
@@ -133,7 +132,8 @@ public class SettingsScreen extends Screen {
                 })
                 .dimensions(this.i + 85, this.height / 2 - 62, 80, 18)
                 .build();
-        textFieldWidgets.add(new TextFieldWidget(textRenderer,this.i + 85, this.height / 2 - 78,30, 14, Text.literal(CONFIG.getString("radius"))));
+        textFieldWidgets.add(new TextFieldWidget(textRenderer,this.i + 85, this.height / 2 - 78,
+                30, 14, Text.literal(CONFIG.getString("radius"))));
         textFieldWidgets.get(0).setText(CONFIG.getString("radius"));
         for (int k = 0; k < 2; k++) {
 

@@ -4,20 +4,17 @@ import com.retrotrack.openitempuller.gui.widget.IPCheckboxWidget;
 import com.retrotrack.openitempuller.gui.widget.hover.TextHoverButtonWidget;
 import com.retrotrack.openitempuller.gui.widget.VerticalScrollbarWidget;
 import com.retrotrack.openitempuller.gui.widget.hover.TextHoverWidget;
-import com.retrotrack.openitempuller.networking.ModMessages;
-import com.retrotrack.openitempuller.networking.packets.OpenSettingsScreenPacket;
-import com.retrotrack.openitempuller.networking.packets.PullItemsPacket;
+import com.retrotrack.openitempuller.networking.payloads.PullItemsPayload;
 import com.retrotrack.openitempuller.util.ChestFinder;
 import com.retrotrack.openitempuller.util.RenderUtil;
 import com.retrotrack.openitempuller.util.decoding.DecodedChest;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.advancement.AdvancementsScreen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -25,7 +22,6 @@ import net.minecraft.client.gui.widget.TexturedButtonWidget;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -106,7 +102,6 @@ public class PullItemScreen extends Screen {
                 .toList();
         filteredList = sortedItems;
         initButtons(-1, true, true);
-
     }
 
     private void initButtons(int selectedButton, boolean reloadDisplays, boolean reloadDefault){
@@ -128,7 +123,6 @@ public class PullItemScreen extends Screen {
         }
         this.addButtons();
         this.addChildren();
-
     }
 
     @Override
@@ -137,23 +131,25 @@ public class PullItemScreen extends Screen {
         if (this.client.world != null) {
             this.renderInGameBackground(context);
             context.drawTexture(TEXTURE, this.i, this.j - 8, 0, 0, this.backgroundWidth, this.backgroundHeight, backgroundWidth, backgroundHeight);
-        } else {
-//            this.renderBackgroundTexture(context);
         }
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
-        IntStream.range(0, itemSelectTexts.size()).forEach(k -> context.drawText(textRenderer, itemSelectTexts.get(k), this.i + 22, this.height / 2 - (75 - 14 * k), 0xffffff, true));
+        IntStream.range(0, itemSelectTexts.size()).forEach(k -> context.drawText(textRenderer, itemSelectTexts.get(k),
+                this.i + 22, this.height / 2 - (75 - 14 * k), 0xffffff, true));
         context.drawText(textRenderer, Text.translatable("openitempuller.pull_screen.top_names"), this.i + 105, this.height / 2 - 74, 0xffffff, true);
-        IntStream.range(0, chestDisplayTexts.size()).forEach(k -> context.drawText(textRenderer, chestDisplayTexts.get(k), this.i + 105, this.height / 2 - (62 - 14 * k), 0xffffff, true));
-        IntStream.range(0, itemCountTexts.size()).forEach(k -> context.drawText(textRenderer, itemCountTexts.get(k), this.i + 177, this.height / 2 - (63 - 14 * k), 0xffffff, true));
+        IntStream.range(0, chestDisplayTexts.size()).forEach(k -> context.drawText(textRenderer, chestDisplayTexts.get(k),
+                this.i + 105, this.height / 2 - (62 - 14 * k), 0xffffff, true));
+        IntStream.range(0, itemCountTexts.size()).forEach(k -> context.drawText(textRenderer, itemCountTexts.get(k),
+                this.i + 177, this.height / 2 - (63 - 14 * k), 0xffffff, true));
         renderVariables.forEach(RenderUtil::renderItemAt);
     }
 
     private void addDefaultWidgets(boolean reload) {
-        if(this.scrollbarWidget == null || reload) this.scrollbarWidget = new VerticalScrollbarWidget(this.i + 95, this.height / 2 - 78, 5, 156, 151, Text.literal(""), (this::moveItemSelectButtons));
+        if(this.scrollbarWidget == null || reload) this.scrollbarWidget = new VerticalScrollbarWidget(this.i + 95, this.height / 2 - 78,
+                5, 156, 151, Text.literal(""), (this::moveItemSelectButtons));
         if(this.searchBar == null || reload)
             this.searchBar = new TextFieldWidget(textRenderer, this.i + 5, this.height / 2 - 96, 96, 12, Text.literal("")) {
                 @Override
@@ -219,17 +215,21 @@ public class PullItemScreen extends Screen {
     private void addButtons() {
         if (this.client == null) return;
         settingsButton = new TexturedButtonWidget(this.i + 217, this.height / 2 - 100, 20, 18,
-                new ButtonTextures(Identifier.of(MOD_ID, "button/settings/settings_button"), Identifier.of(MOD_ID, "button/settings/settings_button")), (button) -> client.setScreen(new SettingsScreen(this, serverRadius)));
+                new ButtonTextures(Identifier.of(MOD_ID, "button/settings/settings_button"),
+                        Identifier.of(MOD_ID, "button/settings/settings_button")), (button) -> client.setScreen(new SettingsScreen(this, serverRadius)));
         pullButton = new TexturedButtonWidget(this.i + 237, this.height / 2 - 100, 20, 18,
-                new ButtonTextures(Identifier.of(MOD_ID, "button/pull/pull_button_highlighted"), Identifier.of(MOD_ID, "button/pull/pull_button_highlighted")), (button) -> client.setScreen(parent));
+                new ButtonTextures(Identifier.of(MOD_ID, "button/pull/pull_button_highlighted"),
+                        Identifier.of(MOD_ID, "button/pull/pull_button_highlighted")), (button) -> client.setScreen(parent));
 
         for (int k = 0; k < Math.min(12, filteredList.size()); k++) {
             int finalK = k;
             if(k+ offset >= filteredList.size()) continue;
             Item item = filteredList.get(k + offset);
-            ButtonTextures textures = new ButtonTextures(Identifier.of(MOD_ID, "button/item_select/item_select_button"), Identifier.of(MOD_ID, "button/pull/item_select_button_highlighted"),
+            ButtonTextures textures =
+                    new ButtonTextures(Identifier.of(MOD_ID, "button/item_select/item_select_button"), Identifier.of(MOD_ID, "button/pull/item_select_button_highlighted"),
                     Identifier.of(MOD_ID, "button/item_select/item_select_button_highlighted"), Identifier.of(MOD_ID, "button/item_select/item_select_button_highlighted"));
-            ButtonTextures texturesSelected = new ButtonTextures(Identifier.of(MOD_ID, "button/item_select/item_select_button_selected"), Identifier.of(MOD_ID, "button/pull/item_select_button_selected"),
+            ButtonTextures texturesSelected =
+                    new ButtonTextures(Identifier.of(MOD_ID, "button/item_select/item_select_button_selected"), Identifier.of(MOD_ID, "button/pull/item_select_button_selected"),
                     Identifier.of(MOD_ID, "button/item_select/item_select_button_selected"), Identifier.of(MOD_ID, "button/item_select/item_select_button_selected"));
             TexturedButtonWidget widget = new TexturedButtonWidget(this.i + 5, this.height / 2 - (78 - 14 * k), 88, (k > 10) ? 2 : 14,
                     item == selectedItem ? texturesSelected : textures,
@@ -262,7 +262,9 @@ public class PullItemScreen extends Screen {
                 chestDisplayTexts.add(Text.literal(StringUtils.abbreviate(chestsWithItem.get(k).name(), 10)));
                 textFieldWidgets.add(new TextFieldWidget(textRenderer,this.i + 205, this.height / 2 - (64 - 14 * k),32, 12, Text.literal("")));
                 int finalK = k;
-                checkBoxWidgets.add(IPCheckboxWidget.builder(Text.literal(""), textRenderer).callback((checkbox, checked) -> textFieldWidgets.get(finalK).setText(checked ? String.valueOf(chestsWithItem.get(finalK).items().get(selectedItem)) :  "")).pos(this.i + 240, this.height / 2 - (64 - 14 * k)).build());
+                checkBoxWidgets.add(IPCheckboxWidget.builder(Text.literal(""), textRenderer)
+                        .callback((checkbox, checked) -> textFieldWidgets.get(finalK).setText(checked ? String.valueOf(chestsWithItem.get(finalK).items().get(selectedItem)) :  ""))
+                        .pos(this.i + 240, this.height / 2 - (64 - 14 * k)).build());
             }
         }
     }
@@ -285,8 +287,7 @@ public class PullItemScreen extends Screen {
         }
         compound.putInt("size", size);
 
-        PullItemsPacket pullItemsPacket = new PullItemsPacket(compound);
-        ClientPlayNetworking.send(pullItemsPacket);
+        ClientPlayNetworking.send(new PullItemsPayload(compound));
     }
 
     public static int getInt(String str) {

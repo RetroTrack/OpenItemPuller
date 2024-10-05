@@ -4,7 +4,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +20,8 @@ public class TextHoverButtonWidget extends NonPressableWidget {
         return new TextHoverButtonWidget.Builder(message, onPress);
     }
 
-    protected TextHoverButtonWidget(int x, int y, int width, int height, Text message, TextHoverButtonWidget.PressAction onPress, TextHoverButtonWidget.NarrationSupplier narrationSupplier) {
+    protected TextHoverButtonWidget(int x, int y, int width, int height, Text message,
+                                    TextHoverButtonWidget.PressAction onPress, TextHoverButtonWidget.NarrationSupplier narrationSupplier) {
         super(x, y, width, height, message);
         this.onPress = onPress;
         this.narrationSupplier = narrationSupplier;
@@ -91,7 +91,8 @@ public class TextHoverButtonWidget extends NonPressableWidget {
         }
 
         public TextHoverButtonWidget build() {
-            TextHoverButtonWidget textHoverButtonWidget = new TextHoverButtonWidget(this.x, this.y, this.width, this.height, this.message, this.onPress, this.narrationSupplier);
+            TextHoverButtonWidget textHoverButtonWidget = new TextHoverButtonWidget(this.x, this.y,
+                    this.width, this.height, this.message, this.onPress, this.narrationSupplier);
             textHoverButtonWidget.setTooltip(this.tooltip);
             return textHoverButtonWidget;
         }

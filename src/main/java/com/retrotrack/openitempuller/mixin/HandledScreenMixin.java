@@ -1,20 +1,18 @@
 package com.retrotrack.openitempuller.mixin;
 
 import com.retrotrack.openitempuller.ItemPuller;
-import com.retrotrack.openitempuller.networking.ModMessages;
-import com.retrotrack.openitempuller.networking.packets.CheckChestPacket;
-import com.retrotrack.openitempuller.networking.packets.OpenSettingsScreenPacket;
+import com.retrotrack.openitempuller.networking.payloads.CheckChestPayload;
+import com.retrotrack.openitempuller.networking.payloads.OpenPullItemScreenPayload;
+import com.retrotrack.openitempuller.networking.payloads.OpenSettingsScreenPayload;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.screen.HopperScreenHandler;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ShulkerBoxScreenHandler;
@@ -28,7 +26,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import static com.retrotrack.openitempuller.ItemPuller.CONFIG;
 import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
 
 // Mixin class to add pull and settings buttons to various screen types
@@ -77,11 +74,11 @@ public abstract class HandledScreenMixin extends Screen {
         // Return if client instance is null
         if (this.client == null) return;
         // Create pull button and attach action for checking chests
-        pullButton = this.addDrawableChild(new TexturedButtonWidget(this.x + 154, (this.height / 2 - this.backgroundHeight / 2 - (this.handler instanceof ShulkerBoxScreenHandler || this.handler instanceof HopperScreenHandler ? 18 : 17)), 20, 18,
+        pullButton = this.addDrawableChild(new TexturedButtonWidget(this.x + 154,
+                (this.height / 2 - this.backgroundHeight / 2 - (this.handler instanceof ShulkerBoxScreenHandler || this.handler instanceof HopperScreenHandler ? 18 : 17)),
+                20, 18,
                 new ButtonTextures(Identifier.of(MOD_ID, "button/pull/pull_button"/*default*/), Identifier.of(MOD_ID, "button/pull/pull_button_highlighted"/*highlighted*/)), (button) -> {
-            // Send Check Chest Packet
-            CheckChestPacket checkChestPacket = new CheckChestPacket(ItemPuller.CONFIG.getInteger("radius"));
-            ClientPlayNetworking.send(checkChestPacket);
+                    ClientPlayNetworking.send(new CheckChestPayload(ItemPuller.CONFIG.getInteger("radius")));
         }));
     }
 }

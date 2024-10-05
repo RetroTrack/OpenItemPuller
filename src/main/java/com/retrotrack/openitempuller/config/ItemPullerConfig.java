@@ -13,10 +13,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.retrotrack.openitempuller.ItemPuller.CONFIG;
+import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
 
 public class ItemPullerConfig {
 
-    public static final String CONFIG_DIRECTORY = FabricLoader.getInstance().getConfigDir() + "/itempuller/";
+    public static final String CONFIG_DIRECTORY = FabricLoader.getInstance().getConfigDir() + "/ " + MOD_ID + "/";
     public static final String CONFIG_FILE = CONFIG_DIRECTORY + "config.json";
 
     public static void initConfig() {

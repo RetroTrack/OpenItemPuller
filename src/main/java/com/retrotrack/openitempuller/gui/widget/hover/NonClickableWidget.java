@@ -1,12 +1,8 @@
-/*
- * Decompiled with CFR 0.2.2 (FabricMC 7c48b8c4).
- */
 package com.retrotrack.openitempuller.gui.widget.hover;
 
 import java.time.Duration;
 import java.util.function.Consumer;
 
-import com.retrotrack.openitempuller.gui.widget.hover.IPWidget;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
@@ -22,7 +18,6 @@ import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.screen.narration.NarrationPart;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.tooltip.TooltipState;
-import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.client.sound.SoundManager;
 import net.minecraft.sound.SoundEvents;
@@ -74,7 +69,8 @@ public abstract class NonClickableWidget
         if (!this.visible) {
             return;
         }
-        this.hovered = context.scissorContains(mouseX, mouseY) && mouseX >= this.getX() && mouseY >= this.getY() && mouseX < this.getX() + this.width && mouseY < this.getY() + this.height;
+        this.hovered = context.scissorContains(mouseX, mouseY) && mouseX >= this.getX()
+                && mouseY >= this.getY() && mouseX < this.getX() + this.width && mouseY < this.getY() + this.height;
         this.renderWidget(context, mouseX, mouseY, delta);
         this.tooltip.render(this.isHovered(), this.isFocused(), this.getNavigationFocus());
     }
@@ -102,11 +98,13 @@ public abstract class NonClickableWidget
 
     protected abstract void renderWidget(DrawContext var1, int var2, int var3, float var4);
 
-    protected static void drawScrollableText(DrawContext context, TextRenderer textRenderer, Text text, int startX, int startY, int endX, int endY, int color) {
+    protected static void drawScrollableText(DrawContext context, TextRenderer textRenderer, Text text, int startX,
+                                             int startY, int endX, int endY, int color) {
         NonClickableWidget.drawScrollableText(context, textRenderer, text, (startX + endX) / 2, startX, startY, endX, endY, color);
     }
 
-    protected static void drawScrollableText(DrawContext context, TextRenderer textRenderer, Text text, int centerX, int startX, int startY, int endX, int endY, int color) {
+    protected static void drawScrollableText(DrawContext context, TextRenderer textRenderer, Text text, int centerX,
+                                             int startX, int startY, int endX, int endY, int color) {
         int i = textRenderer.getWidth(text);
         int j = (startY + endY - textRenderer.fontHeight) / 2 + 1;
         int k = endX - startX;
@@ -177,7 +175,8 @@ public abstract class NonClickableWidget
     }
 
     protected boolean clicked(double mouseX, double mouseY) {
-        return this.active && this.visible && mouseX >= (double)this.getX() && mouseY >= (double)this.getY() && mouseX < (double)(this.getX() + this.getWidth()) && mouseY < (double)(this.getY() + this.getHeight());
+        return this.active && this.visible && mouseX >= (double)this.getX() && mouseY >= (double)this.getY()
+                && mouseX < (double)(this.getX() + this.getWidth()) && mouseY < (double)(this.getY() + this.getHeight());
     }
 
     @Override
@@ -194,7 +193,8 @@ public abstract class NonClickableWidget
 
     @Override
     public boolean isMouseOver(double mouseX, double mouseY) {
-        return this.active && this.visible && mouseX >= (double)this.getX() && mouseY >= (double)this.getY() && mouseX < (double)(this.getX() + this.width) && mouseY < (double)(this.getY() + this.height);
+        return this.active && this.visible && mouseX >= (double)this.getX() && mouseY >= (double)this.getY()
+                && mouseX < (double)(this.getX() + this.width) && mouseY < (double)(this.getY() + this.height);
     }
 
     public void playDownSound(SoundManager soundManager) {

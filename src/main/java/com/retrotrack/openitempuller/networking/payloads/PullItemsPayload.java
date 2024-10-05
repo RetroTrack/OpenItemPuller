@@ -1,51 +1,45 @@
-package com.retrotrack.openitempuller.networking.packets;
+package com.retrotrack.openitempuller.networking.payloads;
 
 import com.retrotrack.openitempuller.util.ChestFinder;
-import net.fabricmc.fabric.api.networking.v1.FabricPacket;
-import net.fabricmc.fabric.api.networking.v1.PacketSender;
-import net.fabricmc.fabric.api.networking.v1.PacketType;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.block.entity.HopperBlockEntity;
 import net.minecraft.block.entity.LockableContainerBlockEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.codec.PacketCodecs;
+import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.registry.Registries;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
 import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
 
-public class PullItemsPacket implements FabricPacket {
-    public static final PacketType<PullItemsPacket> TYPE = PacketType.create(
-            Identifier.of(MOD_ID, "pull_items"),
-            PullItemsPacket::new
-    );
-    public final NbtCompound nbtCompound;
+public record PullItemsPayload(NbtCompound compound) implements CustomPayload {
+    public static final CustomPayload.Id<PullItemsPayload> ID = new CustomPayload.Id<>(Identifier.of(MOD_ID, "pull_items"));
+    public static final PacketCodec<RegistryByteBuf, PullItemsPayload> CODEC = PacketCodec.tuple(
+            PacketCodecs.NBT_COMPOUND, PullItemsPayload::compound, PullItemsPayload::new);
 
-    public PullItemsPacket(NbtCompound nbtCompound) {
-        this.nbtCompound = nbtCompound;
+    @Override
+    public Id<? extends CustomPayload> getId() {
+        return ID;
     }
 
-    public PullItemsPacket(PacketByteBuf buf) {
-        this(buf.readNbt());
-    }
 
-    public static void receiveServer(PullItemsPacket packet, ServerPlayerEntity player, PacketSender sender) {
+    public void receiveServer(ServerPlayNetworking.Context context) {
         try {
-            NbtCompound compound = packet.nbtCompound;
-            if (compound == null) return;
             int size = compound.getInt("size");
             for (int i = 0; i < size; i++) {
                 NbtCompound child = compound.getCompound("chest_id_" + i);
                 if (child == null) continue;
                 BlockPos pos = new BlockPos(child.getIntArray("pos")[0], child.getIntArray("pos")[1], child.getIntArray("pos")[2]);
 
-                LockableContainerBlockEntity chestBlockEntity = ChestFinder.checkLockableContainerBlockEntity(player.getServerWorld(), pos);
+                LockableContainerBlockEntity chestBlockEntity = ChestFinder.checkLockableContainerBlockEntity(context.player().getServerWorld(), pos);
                 if (chestBlockEntity == null) continue;
 
-                Inventory chestInventory = HopperBlockEntity.getInventoryAt(player.getServerWorld(), chestBlockEntity.getPos());
+                Inventory chestInventory = HopperBlockEntity.getInventoryAt(context.player().getServerWorld(), chestBlockEntity.getPos());
                 if (chestInventory == null) continue;
 
                 int itemCount = child.getInt("item_count");
@@ -64,7 +58,7 @@ public class PullItemsPacket implements FabricPacket {
                         ItemStack copiedStack = chestInventoryStack.split(transferAmount);
 
                         // Offer the copied stack to the player's inventory or drop it
-                        player.getInventory().offerOrDrop(copiedStack);
+                        context.player().getInventory().offerOrDrop(copiedStack);
 
                         // Update the count of items transferred
                         itemsTransferred += transferAmount;
@@ -78,14 +72,4 @@ public class PullItemsPacket implements FabricPacket {
             throw new RuntimeException(e);
         }
     }
-    @Override
-    public void write(PacketByteBuf buf) {
-        buf.writeNbt(this.nbtCompound);
-    }
-
-    @Override
-    public PacketType<?> getType() {
-        return TYPE;
-    }
-
 }
