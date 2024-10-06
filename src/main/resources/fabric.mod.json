@@ -4,7 +4,7 @@
   "version": "${version}",
   "name": "OpenItemPuller",
   "description": "Wondering where you left all those items? With OIP you'll find them in seconds!",
-  "authors": [],
+  "authors": ["Retro"],
   "contact": {
     "repo": "https://github.com/RetroTrack/OpenItemPuller"
   },
