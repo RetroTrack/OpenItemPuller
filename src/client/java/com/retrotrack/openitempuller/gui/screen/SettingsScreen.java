@@ -39,6 +39,7 @@ public class SettingsScreen extends Screen {
     private TexturedButtonWidget pullButton;
     private TexturedButtonWidget settingsButton;
     private ButtonWidget priorityButton;
+    private TexturedButtonWidget sortButton;
 
     //Screen Texts
     private final ArrayList<Text> textWidgets = new ArrayList<>();
@@ -46,6 +47,7 @@ public class SettingsScreen extends Screen {
     //Variables
     private final int serverRadius;
     private int priorityType = ItemPuller.CONFIG.getInteger("priority_type");
+    private String sortingMode = ItemPuller.CONFIG.getString("sorting_mode");
 
     public SettingsScreen(Screen parent, int serverRadius) {
         super(Text.literal(" "));
@@ -102,6 +104,7 @@ public class SettingsScreen extends Screen {
         this.addDrawableChild(settingsButton);
         this.addDrawableChild(pullButton);
         this.addDrawableChild(priorityButton);
+        this.addDrawableChild(sortButton);
     }
 
     private void addWidgets() {
@@ -144,12 +147,25 @@ public class SettingsScreen extends Screen {
             textWidgets.add(Text.translatable("openitempuller.settings_screen.option_" + k));
             textHovers.add(widget);
         }
+
+        sortButton = new TexturedButtonWidget(this.i + 166, this.height/2 - 62, 18, 18,
+                sortingMode.equals("ascending") ? new ButtonTextures(
+                        Identifier.of(MOD_ID, "button/sort/sort_button_ascending"),
+                        Identifier.of(MOD_ID, "button/sort/sort_button_ascending_highlighted"))
+                : new ButtonTextures(
+                        Identifier.of(MOD_ID, "button/sort/sort_button_descending"),
+                        Identifier.of(MOD_ID, "button/sort/sort_button_descending_highlighted")),
+                (button) -> {
+                    sortingMode = (sortingMode.equals("ascending") ? "descending" : "ascending");
+                    initButtons();
+                });
     }
 
     public void saveFiles() {
         CONFIG.addProperty("radius", getInt(textFieldWidgets.get(0).getText()) == -1 ?
                 (CONFIG.getInteger("radius") == null ? 16 : CONFIG.getInteger("radius")) : getInt(textFieldWidgets.get(0).getText()));
         CONFIG.addProperty("priority_type", priorityType);
+        CONFIG.addProperty("sorting_mode", sortingMode);
         ItemPullerConfig.saveConfig(CONFIG, ItemPullerConfig.CONFIG_FILE);
     }
 

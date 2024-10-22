@@ -73,6 +73,7 @@ public class ItemPullerConfig {
             // Set default values
             properties.put("radius", 16);
             properties.put("priority_type", 0);
+            properties.put("sorting_mode", "ascending");
         }
 
         public void addProperty(String key, Object value) {
@@ -100,6 +101,9 @@ public class ItemPullerConfig {
             }
             if (!properties.containsKey("priority_type")) {
                 properties.put("priority_type", 0);
+            }
+            if (!properties.containsKey("sorting_mode")) {
+                properties.put("sorting_mode", "ascending");
             }
         }
 

@@ -14,7 +14,6 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.advancement.AdvancementsScreen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -28,6 +27,7 @@ import net.minecraft.util.Identifier;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -251,6 +251,7 @@ public class PullItemScreen extends Screen {
 
     private void addChestDisplays(Item selectedItem) {
         chestsWithItem = hasChestItem(selectedItem);
+        if(CONFIG.getString("sorting_mode").equals("ascending")) Collections.reverse(chestsWithItem);
 
         for (int k = 0; k < chestsWithItem.size(); k++) {
             if(k < 10) {
