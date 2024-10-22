@@ -137,7 +137,7 @@ public class SettingsScreen extends Screen {
                 .build();
         textFieldWidgets.add(new TextFieldWidget(textRenderer,this.i + 85, this.height / 2 - 78,
                 30, 14, Text.literal(CONFIG.getString("radius"))));
-        textFieldWidgets.get(0).setText(CONFIG.getString("radius"));
+        textFieldWidgets.getFirst().setText(CONFIG.getString("radius"));
         for (int k = 0; k < 2; k++) {
 
             TextHoverWidget widget = new TextHoverWidget(this.i + 8, this.height / 2 - (78 - 14 * k), 70, 14);
@@ -162,8 +162,8 @@ public class SettingsScreen extends Screen {
     }
 
     public void saveFiles() {
-        CONFIG.addProperty("radius", getInt(textFieldWidgets.get(0).getText()) == -1 ?
-                (CONFIG.getInteger("radius") == null ? 16 : CONFIG.getInteger("radius")) : getInt(textFieldWidgets.get(0).getText()));
+        CONFIG.addProperty("radius", getInt(textFieldWidgets.getFirst().getText()) == -1 ?
+                (CONFIG.getInteger("radius") == null ? 16 : CONFIG.getInteger("radius")) : getInt(textFieldWidgets.getFirst().getText()));
         CONFIG.addProperty("priority_type", priorityType);
         CONFIG.addProperty("sorting_mode", sortingMode);
         ItemPullerConfig.saveConfig(CONFIG, ItemPullerConfig.CONFIG_FILE);
