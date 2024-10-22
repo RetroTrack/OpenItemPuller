@@ -53,6 +53,7 @@ public class ItemPullerConfig {
                 directory.mkdirs();
             }
 
+
             // Write JSON to file
             FileWriter writer = new FileWriter(filename);
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -73,7 +74,7 @@ public class ItemPullerConfig {
             // Set default values
             properties.put("radius", 16);
             properties.put("priority_type", 0);
-            properties.put("sorting_mode", "ascending");
+            properties.put("sorting_mode", "descending");
         }
 
         public void addProperty(String key, Object value) {
@@ -85,10 +86,12 @@ public class ItemPullerConfig {
         }
         public Integer getInteger(String key) {
             Object value = properties.get(key);
-            if (value instanceof Double) return ((Double) value).intValue();
-            else if (value instanceof Integer) return (Integer) value;
-            else if (value instanceof Float) return ((Float) value).intValue();
-            else return null;
+            return switch (value) {
+                case Double v -> v.intValue();
+                case Integer i -> i;
+                case Float v -> v.intValue();
+                case null, default -> null;
+            };
         }
 
         public String getString(String key) {
@@ -103,7 +106,7 @@ public class ItemPullerConfig {
                 properties.put("priority_type", 0);
             }
             if (!properties.containsKey("sorting_mode")) {
-                properties.put("sorting_mode", "ascending");
+                properties.put("sorting_mode", "descending");
             }
         }
 

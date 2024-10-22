@@ -2,8 +2,6 @@ package com.retrotrack.openitempuller.mixin;
 
 import com.retrotrack.openitempuller.ItemPuller;
 import com.retrotrack.openitempuller.networking.payloads.CheckChestPayload;
-import com.retrotrack.openitempuller.networking.payloads.OpenPullItemScreenPayload;
-import com.retrotrack.openitempuller.networking.payloads.OpenSettingsScreenPayload;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -77,8 +75,7 @@ public abstract class HandledScreenMixin extends Screen {
         pullButton = this.addDrawableChild(new TexturedButtonWidget(this.x + 154,
                 (this.height / 2 - this.backgroundHeight / 2 - (this.handler instanceof ShulkerBoxScreenHandler || this.handler instanceof HopperScreenHandler ? 18 : 17)),
                 20, 18,
-                new ButtonTextures(Identifier.of(MOD_ID, "button/pull/pull_button"/*default*/), Identifier.of(MOD_ID, "button/pull/pull_button_highlighted"/*highlighted*/)), (button) -> {
-                    ClientPlayNetworking.send(new CheckChestPayload(ItemPuller.CONFIG.getInteger("radius")));
-        }));
+                new ButtonTextures(Identifier.of(MOD_ID, "button/pull/pull_button"/*default*/), Identifier.of(MOD_ID, "button/pull/pull_button_highlighted"/*highlighted*/)),
+                (button) -> ClientPlayNetworking.send(new CheckChestPayload(ItemPuller.CONFIG.getInteger("radius")))));
     }
 }
