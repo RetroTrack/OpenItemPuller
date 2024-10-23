@@ -3,18 +3,11 @@ package com.retrotrack.openitempuller.networking.payloads;
 import com.retrotrack.openitempuller.gui.screen.SettingsScreen;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.client.gui.screen.advancement.AdvancementsScreen;
-import net.minecraft.client.gui.screen.multiplayer.MultiplayerScreen;
-import net.minecraft.client.gui.screen.option.OptionsScreen;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.util.Identifier;
-
-import java.util.Objects;
 
 import static com.retrotrack.openitempuller.ItemPuller.CONFIG;
 import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
