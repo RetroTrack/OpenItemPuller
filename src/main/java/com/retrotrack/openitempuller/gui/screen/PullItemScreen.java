@@ -18,7 +18,6 @@ import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
@@ -132,7 +131,7 @@ public class PullItemScreen extends Screen {
         if (this.client.world != null) {
             this.renderInGameBackground(context);
 
-            context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, this.i, this.j - 8, 0, 0, this.backgroundWidth, this.backgroundHeight, backgroundWidth, backgroundHeight);
+            context.drawTexture(TEXTURE, this.i, this.j - 8, 0, 0, this.backgroundWidth, this.backgroundHeight, backgroundWidth, backgroundHeight);
         }
     }
 

@@ -37,7 +37,7 @@ public class VerticalScrollbarWidget extends ClickableWidget {
 
     @Override
     protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.drawTexture(RenderLayer::getGuiTextured,TEXTURE, this.x, this.y + (int) ((float) scrollPos / scrollHeight * height),
+        context.drawTexture(TEXTURE, this.x, this.y + (int) ((float) scrollPos / scrollHeight * height),
                 0, 0, 7, 15, 7, 15);
 
     }
