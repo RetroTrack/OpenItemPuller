@@ -1,6 +1,8 @@
 package com.retrotrack.openitempuller.networking.packets;
 
 import com.retrotrack.openitempuller.gui.screen.SettingsScreen;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.networking.v1.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -30,6 +32,7 @@ public class OpenSettingsScreenPacket implements FabricPacket {
         ServerPlayNetworking.send(player, new OpenSettingsScreenPacket(CONFIG.getInteger("radius")));
     }
 
+    @Environment(EnvType.CLIENT)
     public static void receiveClient(OpenSettingsScreenPacket packet, ClientPlayerEntity player, PacketSender sender) {
         MinecraftClient client = MinecraftClient.getInstance();
         client.setScreen(new SettingsScreen(client.currentScreen, packet.radius));
