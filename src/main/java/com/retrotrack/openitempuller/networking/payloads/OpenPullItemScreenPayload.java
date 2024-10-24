@@ -2,8 +2,10 @@ package com.retrotrack.openitempuller.networking.payloads;
 
 import com.retrotrack.openitempuller.gui.screen.PullItemScreen;
 import com.retrotrack.openitempuller.util.decoding.NbtChestCoder;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.MinecraftClient;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
@@ -11,6 +13,7 @@ import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.util.Identifier;
 
+import static com.retrotrack.openitempuller.ItemPuller.CONFIG;
 import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
 
 public record OpenPullItemScreenPayload(NbtCompound encodedChests, int serverRadius) implements CustomPayload {
@@ -25,6 +28,10 @@ public record OpenPullItemScreenPayload(NbtCompound encodedChests, int serverRad
         return ID;
     }
 
+    public void receiveServer(ServerPlayNetworking.Context context) {
+
+    }
+    @Environment(EnvType.CLIENT)
     public void receiveClient(ClientPlayNetworking.Context context) {
         context.client().setScreen(new PullItemScreen(context.client().currentScreen, NbtChestCoder.decode(encodedChests), serverRadius));
     }
