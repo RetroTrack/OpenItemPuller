@@ -1,6 +1,7 @@
 package com.retrotrack.openitempuller.gui.widget;
 
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
@@ -9,57 +10,40 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.screen.narration.NarrationPart;
 import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.MultilineTextWidget;
 import net.minecraft.client.gui.widget.PressableWidget;
 import net.minecraft.client.option.SimpleOption;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.ColorHelper;
+import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
+import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
 
 @Environment(EnvType.CLIENT)
 public class IPCheckboxWidget extends PressableWidget {
-    private static final Identifier SELECTED_HIGHLIGHTED_TEXTURE = Identifier.ofVanilla("widget/checkbox_selected_highlighted");
-    private static final Identifier SELECTED_TEXTURE = Identifier.ofVanilla("widget/checkbox_selected");
-    private static final Identifier HIGHLIGHTED_TEXTURE = Identifier.ofVanilla("widget/checkbox_highlighted");
-    private static final Identifier TEXTURE = Identifier.ofVanilla("widget/checkbox");
+    private static final Identifier SELECTED_HIGHLIGHTED_TEXTURE = new Identifier(MOD_ID, "textures/gui/sprites/button/checkbox/checkbox_selected_highlighted.png");
+    private static final Identifier SELECTED_TEXTURE = new Identifier(MOD_ID, "textures/gui/sprites/button/checkbox/checkbox_selected.png");
+    private static final Identifier HIGHLIGHTED_TEXTURE = new Identifier(MOD_ID, "textures/gui/sprites/button/checkbox/checkbox_highlighted.png");
+    private static final Identifier TEXTURE = new Identifier(MOD_ID, "textures/gui/sprites/button/checkbox/checkbox.png");
     private boolean checked;
     private final IPCheckboxWidget.Callback callback;
-    private final MultilineTextWidget textWidget;
 
-    IPCheckboxWidget(int x, int y, int maxWidth, Text message, TextRenderer textRenderer, boolean checked, IPCheckboxWidget.Callback callback) {
-        super(x, y, 0, 0, message);
-        this.width = this.calculateWidth(maxWidth, message, textRenderer);
-        this.textWidget = (new MultilineTextWidget(message, textRenderer)).setMaxWidth(this.width).setTextColor(14737632);
-        this.height = this.calculateHeight(textRenderer);
+    IPCheckboxWidget(int x, int y, Text message, TextRenderer textRenderer, boolean checked, IPCheckboxWidget.Callback callback) {
+        super(x, y, getSize() + 4 + textRenderer.getWidth(message), getSize(), message);
         this.checked = checked;
         this.callback = callback;
     }
 
-    private int calculateWidth(int max, Text text, TextRenderer textRenderer) {
-        return Math.min(calculateWidth(text, textRenderer), max);
+    public static Builder builder(Text text, TextRenderer textRenderer) {
+
+        return new Builder(text, textRenderer);
     }
 
-    private int calculateHeight(TextRenderer textRenderer) {
-        return Math.max(getCheckboxSize(textRenderer), this.textWidget.getHeight());
-    }
-
-    static int calculateWidth(Text text, TextRenderer textRenderer) {
-        return getCheckboxSize(textRenderer) + 4 + textRenderer.getWidth(text);
-    }
-
-    public static IPCheckboxWidget.Builder builder(Text text, TextRenderer textRenderer) {
-        return new IPCheckboxWidget.Builder(text, textRenderer);
-    }
-
-    public static int getCheckboxSize(TextRenderer textRenderer) {
-        Objects.requireNonNull(textRenderer);
+    private static int getSize() {
         return 12;
     }
 
+    @Override
     public void onPress() {
         this.checked = !this.checked;
         this.callback.onValueChange(this, this.checked);
@@ -69,6 +53,7 @@ public class IPCheckboxWidget extends PressableWidget {
         return this.checked;
     }
 
+    @Override
     public void appendClickableNarrations(NarrationMessageBuilder builder) {
         builder.put(NarrationPart.TITLE, this.getNarrationMessage());
         if (this.active) {
@@ -78,12 +63,15 @@ public class IPCheckboxWidget extends PressableWidget {
                 builder.put(NarrationPart.USAGE, Text.translatable("narration.checkbox.usage.hovered"));
             }
         }
-
     }
 
-    public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    @Override
+    public void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {
         MinecraftClient minecraftClient = MinecraftClient.getInstance();
+        RenderSystem.enableDepthTest();
         TextRenderer textRenderer = minecraftClient.textRenderer;
+        context.setShaderColor(1.0F, 1.0F, 1.0F, this.alpha);
+        RenderSystem.enableBlend();
         Identifier identifier;
         if (this.checked) {
             identifier = this.isFocused() ? SELECTED_HIGHLIGHTED_TEXTURE : SELECTED_TEXTURE;
@@ -91,76 +79,57 @@ public class IPCheckboxWidget extends PressableWidget {
             identifier = this.isFocused() ? HIGHLIGHTED_TEXTURE : TEXTURE;
         }
 
-        int i = getCheckboxSize(textRenderer);
-        context.drawGuiTexture(RenderLayer::getGuiTextured, identifier, this.getX(), this.getY(), i, i, ColorHelper.getWhite(this.alpha));
+        int i = getSize();
         int j = this.getX() + i + 4;
-        int k = this.getY() + i / 2 - this.textWidget.getHeight() / 2;
-        this.textWidget.setPosition(j, k);
-        this.textWidget.renderWidget(context, mouseX, mouseY, delta);
-    }
-
-    @Environment(EnvType.CLIENT)
-    public interface Callback {
-        IPCheckboxWidget.Callback EMPTY = (checkbox, checked) -> {
-        };
-
-        void onValueChange(IPCheckboxWidget checkbox, boolean checked);
+        int k = this.getY() + (this.height >> 1) - (9 >> 1);
+        context.drawTexture(identifier, this.getX(), this.getY(), 0, 0, i, i, 12, 12);
+        context.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        context.drawTextWithShadow(textRenderer, this.getMessage(), j, k, 14737632 | MathHelper.ceil(this.alpha * 255.0F) << 24);
     }
 
     @Environment(EnvType.CLIENT)
     public static class Builder {
         private final Text message;
         private final TextRenderer textRenderer;
-        private int maxWidth;
         private int x = 0;
         private int y = 0;
-        private IPCheckboxWidget.Callback callback;
-        private boolean checked;
+        private IPCheckboxWidget.Callback callback = IPCheckboxWidget.Callback.EMPTY;
+        private boolean checked = false;
         @Nullable
-        private SimpleOption<Boolean> option;
+        private SimpleOption<Boolean> option = null;
         @Nullable
-        private Tooltip tooltip;
+        private Tooltip tooltip = null;
 
         Builder(Text message, TextRenderer textRenderer) {
-            this.callback = IPCheckboxWidget.Callback.EMPTY;
-            this.checked = false;
-            this.option = null;
-            this.tooltip = null;
             this.message = message;
             this.textRenderer = textRenderer;
-            this.maxWidth = IPCheckboxWidget.calculateWidth(message, textRenderer);
         }
 
-        public IPCheckboxWidget.Builder pos(int x, int y) {
+        public Builder pos(int x, int y) {
             this.x = x;
             this.y = y;
             return this;
         }
 
-        public IPCheckboxWidget.Builder callback(IPCheckboxWidget.Callback callback) {
+        public Builder callback(IPCheckboxWidget.Callback callback) {
             this.callback = callback;
             return this;
         }
 
-        public IPCheckboxWidget.Builder checked(boolean checked) {
+        public Builder checked(boolean checked) {
             this.checked = checked;
             this.option = null;
             return this;
         }
 
-        public IPCheckboxWidget.Builder option(SimpleOption<Boolean> option) {
+        public Builder option(SimpleOption<Boolean> option) {
             this.option = option;
             this.checked = option.getValue();
             return this;
         }
 
-        public IPCheckboxWidget.Builder tooltip(Tooltip tooltip) {
+        public Builder tooltip(Tooltip tooltip) {
             this.tooltip = tooltip;
-            return this;
-        }
-
-        public IPCheckboxWidget.Builder maxWidth(int maxWidth) {
-            this.maxWidth = maxWidth;
             return this;
         }
 
@@ -169,9 +138,17 @@ public class IPCheckboxWidget extends PressableWidget {
                 this.option.setValue(checked);
                 this.callback.onValueChange(checkbox, checked);
             };
-            IPCheckboxWidget checkboxWidget = new IPCheckboxWidget(this.x, this.y, this.maxWidth, this.message, this.textRenderer, this.checked, callback);
+            IPCheckboxWidget checkboxWidget = new IPCheckboxWidget(this.x, this.y, this.message, this.textRenderer, this.checked, callback);
             checkboxWidget.setTooltip(this.tooltip);
             return checkboxWidget;
         }
+    }
+
+    @Environment(EnvType.CLIENT)
+    public interface Callback {
+        IPCheckboxWidget.Callback EMPTY = (checkbox, checked) -> {
+        };
+
+        void onValueChange(IPCheckboxWidget checkbox, boolean checked);
     }
 }

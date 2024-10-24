@@ -1,10 +1,10 @@
 package com.retrotrack.openitempuller.gui.screen;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.retrotrack.openitempuller.gui.widget.IPCheckboxWidget;
-import com.retrotrack.openitempuller.gui.widget.hover.TextHoverButtonWidget;
 import com.retrotrack.openitempuller.gui.widget.VerticalScrollbarWidget;
 import com.retrotrack.openitempuller.gui.widget.hover.TextHoverWidget;
-import com.retrotrack.openitempuller.networking.payloads.PullItemsPayload;
+import com.retrotrack.openitempuller.networking.packets.PullItemsPacket;
 import com.retrotrack.openitempuller.util.ChestFinder;
 import com.retrotrack.openitempuller.util.RenderUtil;
 import com.retrotrack.openitempuller.util.decoding.DecodedChest;
@@ -12,13 +12,11 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
@@ -26,6 +24,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,7 +42,7 @@ public class PullItemScreen extends Screen {
     //Screen Constants
     protected final int backgroundWidth = 259;
     protected final int backgroundHeight = 182;
-    private static final Identifier TEXTURE = Identifier.of(MOD_ID, "textures/gui/screen/pull_item_screen.png");
+    private static final Identifier TEXTURE = new Identifier(MOD_ID, "textures/gui/screen/pull_item_screen.png");
     private int i = (this.width - this.backgroundWidth) / 2;
     private int j = (this.height - this.backgroundHeight) / 2;
     private final Screen parent;
@@ -59,7 +58,7 @@ public class PullItemScreen extends Screen {
     private final ArrayList<TexturedButtonWidget> itemSelectButtons = new ArrayList<>();
     private final ArrayList<TextFieldWidget> textFieldWidgets = new ArrayList<>();
     private final ArrayList<IPCheckboxWidget> checkBoxWidgets = new ArrayList<>();
-    private final ArrayList<TextHoverButtonWidget> chestsDisplayHovers = new ArrayList<>();
+    private final ArrayList<TextHoverWidget> chestsDisplayHovers = new ArrayList<>();
     private TextFieldWidget searchBar;
     private VerticalScrollbarWidget scrollbarWidget;
 
@@ -127,17 +126,20 @@ public class PullItemScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderBackground(DrawContext context) {
         assert this.client != null;
         if (this.client.world != null) {
-            this.renderInGameBackground(context);
-
-            context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, this.i, this.j - 8, 0, 0, this.backgroundWidth, this.backgroundHeight, backgroundWidth, backgroundHeight);
+            context.fillGradient(0, 0, this.width, this.height, -1072689136, -804253680);
+            RenderSystem.enableBlend();
+            context.drawTexture(TEXTURE, this.i, this.j - 8, 0, 0, this.backgroundWidth, this.backgroundHeight, backgroundWidth, backgroundHeight);
+        } else {
+            this.renderBackgroundTexture(context);
         }
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        renderBackground(context);
         super.render(context, mouseX, mouseY, delta);
         IntStream.range(0, itemSelectTexts.size()).forEach(k -> context.drawText(textRenderer, itemSelectTexts.get(k),
                 this.i + 22, this.height / 2 - (75 - 14 * k), 0xffffff, true));
@@ -216,39 +218,38 @@ public class PullItemScreen extends Screen {
 
     private void addButtons() {
         if (this.client == null) return;
-        settingsButton = new TexturedButtonWidget(this.i + 217, this.height / 2 - 100, 20, 18,
-                new ButtonTextures(Identifier.of(MOD_ID, "button/settings/settings_button"),
-                        Identifier.of(MOD_ID, "button/settings/settings_button")), (button) -> client.setScreen(new SettingsScreen(this, serverRadius)));
-        pullButton = new TexturedButtonWidget(this.i + 237, this.height / 2 - 100, 20, 18,
-                new ButtonTextures(Identifier.of(MOD_ID, "button/pull/pull_button_highlighted"),
-                        Identifier.of(MOD_ID, "button/pull/pull_button_highlighted")), (button) -> client.setScreen(parent));
+        settingsButton = new TexturedButtonWidget(this.i + 217, this.height / 2 - 100, 20, 18, 0, 0, 19,
+                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/settings_button_merged.png"), (button) -> client.setScreen(new SettingsScreen(this, serverRadius)));
+        pullButton = new TexturedButtonWidget(this.i + 237, this.height / 2 - 100, 20, 18, 0, 0, 19,
+                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/pull_button_merged.png"), (button) -> client.setScreen(parent));
 
         for (int k = 0; k < Math.min(12, filteredList.size()); k++) {
-            int finalK = k;
             if(k+ offset >= filteredList.size()) continue;
+
             Item item = filteredList.get(k + offset);
-            ButtonTextures textures =
-                    new ButtonTextures(Identifier.of(MOD_ID, "button/item_select/item_select_button"), Identifier.of(MOD_ID, "button/pull/item_select_button_highlighted"),
-                    Identifier.of(MOD_ID, "button/item_select/item_select_button_highlighted"), Identifier.of(MOD_ID, "button/item_select/item_select_button_highlighted"));
-            ButtonTextures texturesSelected =
-                    new ButtonTextures(Identifier.of(MOD_ID, "button/item_select/item_select_button_selected"), Identifier.of(MOD_ID, "button/pull/item_select_button_selected"),
-                    Identifier.of(MOD_ID, "button/item_select/item_select_button_selected"), Identifier.of(MOD_ID, "button/item_select/item_select_button_selected"));
-            TexturedButtonWidget widget = new TexturedButtonWidget(this.i + 5, this.height / 2 - (78 - 14 * k), 88, (k > 10) ? 2 : 14,
-                    item == selectedItem ? texturesSelected : textures,
-                    (button) -> initButtons(finalK + offset, true, false)) {
-                @Override
-                public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-                    scrollbarWidget.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
-                    return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
-                }
-            };
-            widget.setTooltip(Tooltip.of(Text.translatable(item.getTranslationKey())));
+            TexturedButtonWidget widget = getWidget(k, item);
             itemSelectButtons.add(widget);
             if (!(k > 10)) {
                 itemSelectTexts.add(Text.literal(StringUtils.abbreviate(Text.translatable(item.getTranslationKey()).getString(), 12)));
                 renderVariables.add(new RenderUtil.RenderVariables(item.getDefaultStack(), this.i + 13, this.height / 2 - (71 - 14 * k), 0.75f, client.getItemRenderer()));
             }
+            
         }
+    }
+
+    private @NotNull TexturedButtonWidget getWidget(int k, Item item) {
+        TexturedButtonWidget widget = new TexturedButtonWidget(this.i + 5, this.height / 2 - (78 - 14 * k), 88, (k > 10) ? 2 : 14, 0,
+                item == selectedItem ? 15 : 0, item == selectedItem ? 15 : 30,
+                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/item_select_button_merged.png"),
+                (button) -> initButtons(k + offset, true, false)) {
+            @Override
+            public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+                scrollbarWidget.mouseScrolled(mouseX, mouseY, amount);
+                return super.mouseScrolled(mouseX, mouseY, amount);
+            }
+        };
+        widget.setTooltip(Tooltip.of(Text.translatable(item.getTranslationKey())));
+        return widget;
     }
 
     private void addChestDisplays(Item selectedItem) {
@@ -290,7 +291,7 @@ public class PullItemScreen extends Screen {
         }
         compound.putInt("size", size);
 
-        ClientPlayNetworking.send(new PullItemsPayload(compound));
+        ClientPlayNetworking.send(new PullItemsPacket(compound));
     }
 
     public static int getInt(String str) {

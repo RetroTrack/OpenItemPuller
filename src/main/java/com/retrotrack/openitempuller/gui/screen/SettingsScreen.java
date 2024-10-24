@@ -1,20 +1,19 @@
 package com.retrotrack.openitempuller.gui.screen;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.retrotrack.openitempuller.ItemPuller;
 import com.retrotrack.openitempuller.config.ItemPullerConfig;
 import com.retrotrack.openitempuller.gui.widget.hover.TextHoverWidget;
-import com.retrotrack.openitempuller.networking.payloads.CheckChestPayload;
+import com.retrotrack.openitempuller.networking.packets.CheckChestPacket;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -29,7 +28,7 @@ public class SettingsScreen extends Screen {
     //Screen Constants
     protected int backgroundWidth = 259;
     protected int backgroundHeight = 182;
-    private static final Identifier TEXTURE = Identifier.of(MOD_ID, "textures/gui/screen/settings_screen.png");
+    private static final Identifier TEXTURE = new Identifier(MOD_ID, "textures/gui/screen/settings_screen.png");
     private int i = (this.width - this.backgroundWidth) / 2;
     private int j = (this.height - this.backgroundHeight) / 2;
     private final Screen parent;
@@ -81,18 +80,20 @@ public class SettingsScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderBackground(DrawContext context) {
         assert this.client != null;
         if (this.client.world != null) {
-            this.renderInGameBackground(context);
-            context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, this.i, this.j - 8, 0, 0, this.backgroundWidth, this.backgroundHeight, backgroundWidth, backgroundHeight);
+            context.fillGradient(0, 0, this.width, this.height, -1072689136, -804253680);
+            RenderSystem.enableBlend();
+            context.drawTexture(TEXTURE, this.i, this.j - 8, 0, 0, this.backgroundWidth, this.backgroundHeight, backgroundWidth, backgroundHeight);
         } else {
-            this.renderDarkening(context);
+            this.renderBackgroundTexture(context);
         }
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        renderBackground(context);
         super.render(context, mouseX, mouseY, delta);
         IntStream.range(0, textWidgets.size()).forEach(k -> context.drawText(textRenderer, textWidgets.get(k),
                 this.i + 10, this.height / 2 - (75 - 16 * k), 0xffffff, true));
@@ -110,23 +111,16 @@ public class SettingsScreen extends Screen {
 
     private void addWidgets() {
         if (this.client == null) return;
-
-        settingsButton = new TexturedButtonWidget(this.i + 217, this.height / 2 - 100, 20, 18,
-                new ButtonTextures(Identifier.of(MOD_ID, "button/settings/settings_button_highlighted"),
-                        Identifier.of(MOD_ID, "button/settings/settings_button_highlighted")), (button) -> {
+        settingsButton = new TexturedButtonWidget(this.i + 217, this.height / 2 - 100, 20, 18, 0, 0, 19,
+                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/settings_button_merged.png"), (button) -> {
             saveFiles();
             client.setScreen(parent);
         });
-        pullButton = new TexturedButtonWidget(this.i + 237, this.height / 2 - 100, 20, 18,
-                parent instanceof PullItemScreen ? new ButtonTextures(Identifier.of(MOD_ID, "button/pull/pull_button_highlighted"),
-                        Identifier.of(MOD_ID, "button/pull/pull_button_highlighted"))
-                : new ButtonTextures(Identifier.of(MOD_ID, "button/pull/pull_button"),
-                        Identifier.of(MOD_ID, "button/pull/pull_button_highlighted")), (button) -> {
+        pullButton = new TexturedButtonWidget(this.i + 237, this.height / 2 - 100, 20, 18, 0, 0, 19,
+                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/pull_button_merged.png"), (button) -> {
             saveFiles();
             if(parent instanceof PullItemScreen) client.setScreen(parent);
-            else {
-                ClientPlayNetworking.send(new CheckChestPayload(ItemPuller.CONFIG.getInteger("radius")));
-            }
+            else ClientPlayNetworking.send(new CheckChestPacket(ItemPuller.CONFIG.getInteger("radius")));
         });
 
         priorityButton = ButtonWidget.builder(Text.translatable("openitempuller.settings_screen.option_1.mode_" + priorityType), button -> {
@@ -149,17 +143,14 @@ public class SettingsScreen extends Screen {
             textHovers.add(widget);
         }
 
-        sortButton = new TexturedButtonWidget(this.i + 166, this.height/2 - 62, 18, 18,
-                sortingMode.equals("ascending") ? new ButtonTextures(
-                        Identifier.of(MOD_ID, "button/sort/sort_button_ascending"),
-                        Identifier.of(MOD_ID, "button/sort/sort_button_ascending_highlighted"))
-                : new ButtonTextures(
-                        Identifier.of(MOD_ID, "button/sort/sort_button_descending"),
-                        Identifier.of(MOD_ID, "button/sort/sort_button_descending_highlighted")),
-                (button) -> {
-                    sortingMode = (sortingMode.equals("ascending") ? "descending" : "ascending");
-                    initButtons();
-                });
+        sortButton = new TexturedButtonWidget(this.i + 166, this.height / 2 - 62, 18, 18, 0, 0, 19,
+             sortingMode.equals("ascending") ?
+                     new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/sort_button_ascending_merged.png")
+                     : new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/sort_button_descending_merged.png"),
+            (button) -> {
+                sortingMode = (sortingMode.equals("ascending") ? "descending" : "ascending");
+                initButtons();
+            });
     }
 
     public void saveFiles() {

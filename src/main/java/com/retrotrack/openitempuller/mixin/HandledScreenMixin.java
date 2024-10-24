@@ -1,12 +1,11 @@
 package com.retrotrack.openitempuller.mixin;
 
 import com.retrotrack.openitempuller.ItemPuller;
-import com.retrotrack.openitempuller.networking.payloads.CheckChestPayload;
+import com.retrotrack.openitempuller.networking.packets.CheckChestPacket;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -74,11 +73,9 @@ public abstract class HandledScreenMixin extends Screen {
                 this.x + this.backgroundWidth - 21,
                 this.y - 17,
                 20, 18,
-                new ButtonTextures(
-                        Identifier.of(MOD_ID, "button/pull/pull_button" /* default */),
-                        Identifier.of(MOD_ID, "button/pull/pull_button_highlighted" /* highlighted */)
-                ),
-                (button) -> ClientPlayNetworking.send(new CheckChestPayload(ItemPuller.CONFIG.getInteger("radius")))
+                0, 0, 19,
+                new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/pull_button_merged.png"),
+                (button) -> ClientPlayNetworking.send(new CheckChestPacket(ItemPuller.CONFIG.getInteger("radius")))
         ));
 
         // Reposition the button

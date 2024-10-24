@@ -14,6 +14,7 @@ import net.minecraft.world.chunk.Chunk;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 public class ChestFinder {
 
@@ -24,8 +25,10 @@ public class ChestFinder {
     public static LockableContainerBlockEntity checkLockableContainerBlockEntity(ServerWorld world, BlockPos pos) {
         BlockEntity blockEntity = world.getBlockEntity(pos);
         if (!(blockEntity instanceof LockableContainerBlockEntity)) return null;
-        if ((blockEntity instanceof LootableContainerBlockEntity) && ((LootableContainerBlockEntity) blockEntity).getLootTable() != null) return null;
-        return ((LockableContainerBlockEntity) blockEntity);
+        System.out.println(blockEntity.createNbtWithId().asString());
+        if ((blockEntity instanceof LootableContainerBlockEntity) && (blockEntity.createNbtWithId().getString("LootTable") == null
+                || Objects.equals(blockEntity.createNbtWithId().getString("LootTable"), ""))) return ((LockableContainerBlockEntity) blockEntity);
+        return null;
     }
 
 
@@ -48,7 +51,8 @@ public class ChestFinder {
                     if (blockEntity instanceof LootableContainerBlockEntity) {
                         BlockPos chestPos = blockEntity.getPos();
                         // Check if the chest is within the radius
-                        if (player.getBlockPos().getSquaredDistance(chestPos) <= radius * radius && ((LootableContainerBlockEntity)blockEntity).getLootTable() == null) {
+                        if (player.getBlockPos().getSquaredDistance(chestPos) <= radius * radius && (blockEntity.createNbtWithId().getString("LootTable") == null
+                                || Objects.equals(blockEntity.createNbtWithId().getString("LootTable"), ""))) {
                             BlockPos connectedChest = ChestConnectionChecker.getConnectedChestPos(player, chestPos);
                             if(connectedChest == null) list.add((LockableContainerBlockEntity) blockEntity);
                             else if(!list.contains((LockableContainerBlockEntity) world.getBlockEntity(connectedChest)))list.add((LockableContainerBlockEntity) blockEntity);

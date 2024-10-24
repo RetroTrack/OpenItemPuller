@@ -1,47 +1,52 @@
-package com.retrotrack.openitempuller.networking.payloads;
+package com.retrotrack.openitempuller.networking.packets;
 
 import com.retrotrack.openitempuller.util.ChestFinder;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.FabricPacket;
+import net.fabricmc.fabric.api.networking.v1.PacketSender;
+import net.fabricmc.fabric.api.networking.v1.PacketType;
 import net.minecraft.block.entity.HopperBlockEntity;
 import net.minecraft.block.entity.LockableContainerBlockEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.registry.Registries;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
 import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
 
-public record PullItemsPayload(NbtCompound compound) implements CustomPayload {
-    public static final CustomPayload.Id<PullItemsPayload> ID = new CustomPayload.Id<>(Identifier.of(MOD_ID, "pull_items"));
-    public static final PacketCodec<RegistryByteBuf, PullItemsPayload> CODEC = PacketCodec.tuple(
-            PacketCodecs.NBT_COMPOUND, PullItemsPayload::compound, PullItemsPayload::new);
+public class PullItemsPacket implements FabricPacket {
+    public static final PacketType<PullItemsPacket> TYPE = PacketType.create(
+            new Identifier(MOD_ID, "pull_items"),
+            PullItemsPacket::new
+    );
+    public final NbtCompound compound;
 
-    @Override
-    public Id<? extends CustomPayload> getId() {
-        return ID;
+    public PullItemsPacket(NbtCompound nbtCompound) {
+        this.compound = nbtCompound;
     }
 
+    public PullItemsPacket(PacketByteBuf buf) {
+        this(buf.readNbt());
+    }
 
-    public void receiveServer(ServerPlayNetworking.Context context) {
+    public static void receiveServer(PullItemsPacket packet, ServerPlayerEntity player, PacketSender sender) {
         try {
-            int size = compound.getInt("size");
+            int size = packet.compound.getInt("size");
             for (int i = 0; i < size; i++) {
-                NbtCompound child = compound.getCompound("chest_id_" + i);
+                NbtCompound child = packet.compound.getCompound("chest_id_" + i);
                 if (child == null) continue;
                 BlockPos pos = new BlockPos(child.getIntArray("pos")[0], child.getIntArray("pos")[1], child.getIntArray("pos")[2]);
 
-                LockableContainerBlockEntity chestBlockEntity = ChestFinder.checkLockableContainerBlockEntity(context.player().getServerWorld(), pos);
+
+
+
+                LockableContainerBlockEntity chestBlockEntity = ChestFinder.checkLockableContainerBlockEntity(player.getServerWorld(), pos);
                 if (chestBlockEntity == null) continue;
-
-                Inventory chestInventory = HopperBlockEntity.getInventoryAt(context.player().getServerWorld(), chestBlockEntity.getPos());
+                Inventory chestInventory = HopperBlockEntity.getInventoryAt(player.getServerWorld(), chestBlockEntity.getPos());
                 if (chestInventory == null) continue;
-
                 int itemCount = child.getInt("item_count");
                 int itemsTransferred = 0;
 
@@ -58,7 +63,7 @@ public record PullItemsPayload(NbtCompound compound) implements CustomPayload {
                         ItemStack copiedStack = chestInventoryStack.split(transferAmount);
 
                         // Offer the copied stack to the player's inventory or drop it
-                        context.player().getInventory().offerOrDrop(copiedStack);
+                        player.getInventory().offerOrDrop(copiedStack);
 
                         // Update the count of items transferred
                         itemsTransferred += transferAmount;
@@ -72,4 +77,14 @@ public record PullItemsPayload(NbtCompound compound) implements CustomPayload {
             throw new RuntimeException(e);
         }
     }
+    @Override
+    public void write(PacketByteBuf buf) {
+        buf.writeNbt(this.compound);
+    }
+
+    @Override
+    public PacketType<?> getType() {
+        return TYPE;
+    }
+
 }

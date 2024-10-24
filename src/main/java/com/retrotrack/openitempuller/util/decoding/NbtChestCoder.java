@@ -134,7 +134,7 @@ public class NbtChestCoder {
 
             HashMap<Item, Integer> map = new HashMap<>();
             for (int itemIndex = 0; itemIndex < itemListSize; itemIndex++) {
-                Item item = Registries.ITEM.get(Identifier.of(itemList.getString("item_" + itemIndex)));
+                Item item = Registries.ITEM.get(new Identifier(itemList.getString("item_" + itemIndex)));
                 map.put(item, itemList.getInt("item_" + itemIndex + "_amount"));
             }
 
