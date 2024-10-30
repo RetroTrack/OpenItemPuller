@@ -24,8 +24,9 @@ public class ChestFinder {
     public static LockableContainerBlockEntity checkLockableContainerBlockEntity(ServerWorld world, BlockPos pos) {
         BlockEntity blockEntity = world.getBlockEntity(pos);
         if (!(blockEntity instanceof LockableContainerBlockEntity)) return null;
-        if ((blockEntity instanceof LootableContainerBlockEntity) && ((LootableContainerBlockEntity) blockEntity).getLootTable() != null) return null;
-        return ((LockableContainerBlockEntity) blockEntity);
+        if(!(blockEntity instanceof LootableContainerBlockEntity)) return (LockableContainerBlockEntity) blockEntity;
+        if (((LootableContainerBlockEntity) blockEntity).getLootTable() != null) return null;
+        return (LockableContainerBlockEntity) blockEntity;
     }
 
 
