@@ -25,10 +25,10 @@ public class ChestFinder {
     public static LockableContainerBlockEntity checkLockableContainerBlockEntity(ServerWorld world, BlockPos pos) {
         BlockEntity blockEntity = world.getBlockEntity(pos);
         if (!(blockEntity instanceof LockableContainerBlockEntity)) return null;
-        System.out.println(blockEntity.createNbtWithId().asString());
-        if ((blockEntity instanceof LootableContainerBlockEntity) && (blockEntity.createNbtWithId().getString("LootTable") == null
-                || Objects.equals(blockEntity.createNbtWithId().getString("LootTable"), ""))) return ((LockableContainerBlockEntity) blockEntity);
-        return null;
+        if (!(blockEntity instanceof LootableContainerBlockEntity)) return ((LockableContainerBlockEntity) blockEntity);
+        if (blockEntity.createNbtWithId().getString("LootTable") != null
+                && !Objects.equals(blockEntity.createNbtWithId().getString("LootTable"), "")) return null;
+        return ((LockableContainerBlockEntity) blockEntity);
     }
 
 
