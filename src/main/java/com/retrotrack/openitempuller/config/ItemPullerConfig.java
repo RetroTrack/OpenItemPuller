@@ -86,12 +86,10 @@ public class ItemPullerConfig {
         }
         public Integer getInteger(String key) {
             Object value = properties.get(key);
-            return switch (value) {
-                case Double v -> v.intValue();
-                case Integer i -> i;
-                case Float v -> v.intValue();
-                case null, default -> null;
-            };
+            if (value instanceof Double) return ((Double) value).intValue();
+            else if (value instanceof Integer) return (Integer) value;
+            else if (value instanceof Float) return ((Float) value).intValue();
+            return null;
         }
 
         public String getString(String key) {
