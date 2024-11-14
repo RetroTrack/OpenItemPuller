@@ -74,6 +74,7 @@ public class ItemPullerConfig {
             // Set default values
             properties.put("radius", 16);
             properties.put("priority_type", 0);
+            properties.put("display_mode", 0);
             properties.put("sorting_mode", "descending");
         }
 
@@ -104,6 +105,9 @@ public class ItemPullerConfig {
             }
             if (!properties.containsKey("priority_type")) {
                 properties.put("priority_type", 0);
+            }
+            if (!properties.containsKey("display_mode")) {
+                properties.put("display_mode", 0);
             }
             if (!properties.containsKey("sorting_mode")) {
                 properties.put("sorting_mode", "descending");

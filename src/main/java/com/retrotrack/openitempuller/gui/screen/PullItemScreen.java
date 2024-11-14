@@ -96,10 +96,22 @@ public class PullItemScreen extends Screen {
         super.init();
         this.i = (this.width - this.backgroundWidth) / 2;
         this.j = (this.height - this.backgroundHeight) / 2;
-        sortedItems = Registries.ITEM.stream()
-                .filter(item -> item != Items.AIR)
-                .sorted(Comparator.comparing(item -> Text.translatable(item.getTranslationKey()).getString()))
-                .toList();
+        List<Item> availableItems = new ArrayList<>();
+        decodedChests.forEach(decodedChest -> decodedChest.items().forEach((item, id) -> {
+            if (!availableItems.contains(item)) availableItems.add(item);
+        }));
+        if(CONFIG.getInteger("display_mode") == 0) {
+            sortedItems = Registries.ITEM.stream()
+                    .filter(item -> item != Items.AIR)
+                    .sorted(Comparator.comparing(item -> Text.translatable(item.getTranslationKey()).getString()))
+                    .toList();
+        }else {
+            sortedItems = Registries.ITEM.stream()
+                    .filter(item -> item != Items.AIR)
+                    .sorted(Comparator.comparing(item -> Text.translatable(item.getTranslationKey()).getString()))
+                    .filter(availableItems::contains)
+                    .toList();
+        }
         filteredList = sortedItems;
         initButtons(-1, true, true);
     }
@@ -144,7 +156,7 @@ public class PullItemScreen extends Screen {
         IntStream.range(0, chestDisplayTexts.size()).forEach(k -> context.drawText(textRenderer, chestDisplayTexts.get(k),
                 this.i + 105, this.height / 2 - (62 - 14 * k), 0xffffff, true));
         IntStream.range(0, itemCountTexts.size()).forEach(k -> context.drawText(textRenderer, itemCountTexts.get(k),
-                this.i + 177, this.height / 2 - (63 - 14 * k), 0xffffff, true));
+                this.i + 177, this.height / 2 - (62 - 14 * k), 0xffffff, true));
         renderVariables.forEach(RenderUtil::renderItemAt);
     }
 
@@ -262,11 +274,16 @@ public class PullItemScreen extends Screen {
                 itemCountTexts.add(Text.literal(String.valueOf(chestsWithItem.get(k).items().get(selectedItem))));
                 chestsDisplayHovers.add(widget);
                 chestDisplayTexts.add(Text.literal(StringUtils.abbreviate(chestsWithItem.get(k).name(), 10)));
-                textFieldWidgets.add(new TextFieldWidget(textRenderer,this.i + 205, this.height / 2 - (64 - 14 * k),32, 12, Text.literal("")));
+                textFieldWidgets.add(new TextFieldWidget(textRenderer,
+                        this.i + 205,
+                        this.height / 2 - (63 - 14 * k),
+                        32,
+                        12,
+                        Text.literal("")));
                 int finalK = k;
                 checkBoxWidgets.add(IPCheckboxWidget.builder(Text.literal(""), textRenderer)
                         .callback((checkbox, checked) -> textFieldWidgets.get(finalK).setText(checked ? String.valueOf(chestsWithItem.get(finalK).items().get(selectedItem)) :  ""))
-                        .pos(this.i + 240, this.height / 2 - (64 - 14 * k)).build());
+                        .pos(this.i + 240, this.height / 2 - (63 - 14 * k)).build());
             }
         }
     }

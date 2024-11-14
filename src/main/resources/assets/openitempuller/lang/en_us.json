@@ -2,10 +2,14 @@
   "openitempuller.pull_screen.top_names": "Name            Total Count All",
   "openitempuller.pull_screen.pull_button": "Pull Items",
   "openitempuller.pull_screen.search": "Search...",
-  "openitempuller.settings_screen.option_0": "Radius",
+  "openitempuller.settings_screen.option_0": "Search Radius",
   "openitempuller.settings_screen.option_0.tooltip": "Server radius limit: %1$s",
   "openitempuller.settings_screen.option_1": "Priority type",
-  "openitempuller.settings_screen.option_1.tooltip": "Way chest the chest list is displayed",
+  "openitempuller.settings_screen.option_1.tooltip": "Changes the way the chest list is displayed",
   "openitempuller.settings_screen.option_1.mode_0": "Range",
-  "openitempuller.settings_screen.option_1.mode_1": "Item count"
+  "openitempuller.settings_screen.option_1.mode_1": "Item count",
+  "openitempuller.settings_screen.option_2": "Display mode",
+  "openitempuller.settings_screen.option_2.tooltip": "Changes the way the item list is displayed",
+  "openitempuller.settings_screen.option_2.mode_0": "All",
+  "openitempuller.settings_screen.option_2.mode_1": "Available"
 }
