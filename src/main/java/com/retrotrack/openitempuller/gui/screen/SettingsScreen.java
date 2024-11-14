@@ -40,6 +40,7 @@ public class SettingsScreen extends Screen {
     private TexturedButtonWidget pullButton;
     private TexturedButtonWidget settingsButton;
     private ButtonWidget priorityButton;
+    private ButtonWidget displayButton;
     private TexturedButtonWidget sortButton;
 
     //Screen Texts
@@ -48,6 +49,7 @@ public class SettingsScreen extends Screen {
     //Variables
     private final int serverRadius;
     private int priorityType = ItemPuller.CONFIG.getInteger("priority_type");
+    private int displayMode = ItemPuller.CONFIG.getInteger("display_mode");
     private String sortingMode = ItemPuller.CONFIG.getString("sorting_mode");
 
     public SettingsScreen(Screen parent, int serverRadius) {
@@ -95,7 +97,7 @@ public class SettingsScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
         IntStream.range(0, textWidgets.size()).forEach(k -> context.drawText(textRenderer, textWidgets.get(k),
-                this.i + 10, this.height / 2 - (75 - 16 * k), 0xffffff, true));
+                this.i + 10, this.height / 2 - (75 - 20 * k), 0xffffff, true));
 
     }
 
@@ -105,6 +107,7 @@ public class SettingsScreen extends Screen {
         this.addDrawableChild(settingsButton);
         this.addDrawableChild(pullButton);
         this.addDrawableChild(priorityButton);
+        this.addDrawableChild(displayButton);
         this.addDrawableChild(sortButton);
     }
 
@@ -129,17 +132,18 @@ public class SettingsScreen extends Screen {
             }
         });
 
+
+        textFieldWidgets.add(new TextFieldWidget(textRenderer,this.i + 86, this.height / 2 - 76,
+                40, 14, Text.literal(CONFIG.getString("radius"))));
+        textFieldWidgets.getFirst().setText(CONFIG.getString("radius"));
         priorityButton = ButtonWidget.builder(Text.translatable("openitempuller.settings_screen.option_1.mode_" + priorityType), button -> {
                 if(priorityType >= 1) priorityType = 0;
                 else priorityType++;
                 button.setMessage(Text.translatable("openitempuller.settings_screen.option_1.mode_" + priorityType));
                 })
-                .dimensions(this.i + 85, this.height / 2 - 62, 80, 18)
+                .dimensions(this.i + 85, this.height / 2 - 58, 80, 18)
                 .build();
-        textFieldWidgets.add(new TextFieldWidget(textRenderer,this.i + 85, this.height / 2 - 78,
-                30, 14, Text.literal(CONFIG.getString("radius"))));
-        textFieldWidgets.getFirst().setText(CONFIG.getString("radius"));
-        for (int k = 0; k < 2; k++) {
+        for (int k = 0; k < 3; k++) {
 
             TextHoverWidget widget = new TextHoverWidget(this.i + 8, this.height / 2 - (78 - 14 * k), 70, 14);
 
@@ -149,7 +153,7 @@ public class SettingsScreen extends Screen {
             textHovers.add(widget);
         }
 
-        sortButton = new TexturedButtonWidget(this.i + 166, this.height/2 - 62, 18, 18,
+        sortButton = new TexturedButtonWidget(this.i + 166, this.height / 2 - 58, 18, 18,
                 sortingMode.equals("ascending") ? new ButtonTextures(
                         Identifier.of(MOD_ID, "button/sort/sort_button_ascending"),
                         Identifier.of(MOD_ID, "button/sort/sort_button_ascending_highlighted"))
@@ -160,6 +164,13 @@ public class SettingsScreen extends Screen {
                     sortingMode = (sortingMode.equals("ascending") ? "descending" : "ascending");
                     initButtons();
                 });
+        displayButton = ButtonWidget.builder(Text.translatable("openitempuller.settings_screen.option_2.mode_" + displayMode), button -> {
+                    if(displayMode >= 1) displayMode = 0;
+                    else displayMode++;
+                    button.setMessage(Text.translatable("openitempuller.settings_screen.option_2.mode_" + displayMode));
+                })
+                .dimensions(this.i + 85, this.height / 2 - 38, 80, 18)
+                .build();
     }
 
     public void saveFiles() {
@@ -167,6 +178,7 @@ public class SettingsScreen extends Screen {
                 (CONFIG.getInteger("radius") == null ? 16 : CONFIG.getInteger("radius")) : getInt(textFieldWidgets.getFirst().getText()));
         CONFIG.addProperty("priority_type", priorityType);
         CONFIG.addProperty("sorting_mode", sortingMode);
+        CONFIG.addProperty("display_mode", displayMode);
         ItemPullerConfig.saveConfig(CONFIG, ItemPullerConfig.CONFIG_FILE);
     }
 
