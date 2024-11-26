@@ -50,7 +50,7 @@ public class ChestFinder {
                         BlockPos chestPos = blockEntity.getPos();
                         // Check if the chest is within the radius
                         if (player.getBlockPos().getSquaredDistance(chestPos) <= radius * radius && ((LootableContainerBlockEntity)blockEntity).getLootTable() == null) {
-                            BlockPos connectedChest = ChestConnectionChecker.getConnectedChestPos(player, chestPos);
+                            BlockPos connectedChest = ChestUtil.getConnectedChestPos(player, chestPos);
                             if(connectedChest == null) list.add((LockableContainerBlockEntity) blockEntity);
                             else if(!list.contains((LockableContainerBlockEntity) world.getBlockEntity(connectedChest)))list.add((LockableContainerBlockEntity) blockEntity);
                         }
@@ -58,7 +58,7 @@ public class ChestFinder {
                         BlockPos chestPos = blockEntity.getPos();
                         // Check if the chest is within the radius
                         if (player.getBlockPos().getSquaredDistance(chestPos) <= radius * radius) {
-                            BlockPos connectedChest = ChestConnectionChecker.getConnectedChestPos(player, chestPos);
+                            BlockPos connectedChest = ChestUtil.getConnectedChestPos(player, chestPos);
                             if(connectedChest == null) list.add((LockableContainerBlockEntity) blockEntity);
                             else if(!list.contains((LockableContainerBlockEntity) world.getBlockEntity(connectedChest)))list.add((LockableContainerBlockEntity) blockEntity);
                         }
@@ -72,12 +72,11 @@ public class ChestFinder {
     public static List<LockableContainerBlockEntity> sortByDistance(List<LockableContainerBlockEntity> blockPosList, ServerPlayerEntity player) {
         // Sort the blockPosList based on distance to the player
         blockPosList.sort(Comparator.comparingDouble(pos -> pos.getPos().getSquaredDistance(player.getX(), player.getY(), player.getZ())));
-
         return blockPosList;
     }
+
     public static ArrayList<DecodedChest> sortByItemCount(ArrayList<DecodedChest> decodedChests, Item item) {
         decodedChests.sort(Comparator.comparingInt(chest -> -chest.items().getOrDefault(item, 0)));
         return decodedChests;
-
     }
 }
