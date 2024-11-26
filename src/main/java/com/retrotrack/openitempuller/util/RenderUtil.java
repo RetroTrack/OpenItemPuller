@@ -37,9 +37,6 @@ public class RenderUtil {
         contextMatrices.pop();
     }
 
-
-
-
     public static void renderItemAt(RenderVariables renderVariables) {
         renderItemAt(renderVariables.itemStack, renderVariables.x, renderVariables.y, renderVariables.scaleFactor, renderVariables.itemRenderer);
     }

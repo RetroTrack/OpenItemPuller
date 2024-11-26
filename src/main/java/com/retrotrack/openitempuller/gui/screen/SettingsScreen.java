@@ -61,7 +61,7 @@ public class SettingsScreen extends Screen {
     @Override
     public void close() {
         if (client == null) return;
-        saveFiles();
+        saveSettings();
         client.setScreen(parent);
     }
 
@@ -70,16 +70,15 @@ public class SettingsScreen extends Screen {
         super.init();
         this.i = (this.width - this.backgroundWidth) / 2;
         this.j = (this.height - this.backgroundHeight) / 2;
-        initButtons();
+        clearWidgets();
+        addWidgets();
+        addChildren();
     }
 
-    private void initButtons(){
+    private void clearWidgets(){
         this.clearChildren();
         textFieldWidgets.clear();
         textWidgets.clear();
-        this.addWidgets();
-        this.addChildren();
-
     }
 
     @Override
@@ -117,7 +116,7 @@ public class SettingsScreen extends Screen {
         settingsButton = new TexturedButtonWidget(this.i + 217, this.height / 2 - 100, 20, 18,
                 new ButtonTextures(Identifier.of(MOD_ID, "button/settings/settings_button_highlighted"),
                         Identifier.of(MOD_ID, "button/settings/settings_button_highlighted")), (button) -> {
-            saveFiles();
+            saveSettings();
             client.setScreen(parent);
         });
         pullButton = new TexturedButtonWidget(this.i + 237, this.height / 2 - 100, 20, 18,
@@ -125,11 +124,9 @@ public class SettingsScreen extends Screen {
                         Identifier.of(MOD_ID, "button/pull/pull_button_highlighted"))
                 : new ButtonTextures(Identifier.of(MOD_ID, "button/pull/pull_button"),
                         Identifier.of(MOD_ID, "button/pull/pull_button_highlighted")), (button) -> {
-            saveFiles();
+            saveSettings();
             if(parent instanceof PullItemScreen) client.setScreen(parent);
-            else {
-                ClientPlayNetworking.send(new CheckChestPayload(ItemPuller.CONFIG.getInteger("radius")));
-            }
+            else ClientPlayNetworking.send(new CheckChestPayload(ItemPuller.CONFIG.getInteger("radius")));
         });
 
 
@@ -143,6 +140,7 @@ public class SettingsScreen extends Screen {
                 })
                 .dimensions(this.i + 85, this.height / 2 - 58, 80, 18)
                 .build();
+
         for (int k = 0; k < 3; k++) {
 
             TextHoverWidget widget = new TextHoverWidget(this.i + 8, this.height / 2 - (78 - 14 * k), 70, 14);
@@ -162,7 +160,7 @@ public class SettingsScreen extends Screen {
                         Identifier.of(MOD_ID, "button/sort/sort_button_descending_highlighted")),
                 (button) -> {
                     sortingMode = (sortingMode.equals("ascending") ? "descending" : "ascending");
-                    initButtons();
+                    clearWidgets();
                 });
         displayButton = ButtonWidget.builder(Text.translatable("openitempuller.settings_screen.option_2.mode_" + displayMode), button -> {
                     if(displayMode >= 1) displayMode = 0;
@@ -173,17 +171,9 @@ public class SettingsScreen extends Screen {
                 .build();
     }
 
-    public void saveFiles() {
-        CONFIG.addProperty("radius", getInt(textFieldWidgets.getFirst().getText()) == -1 ?
-                (CONFIG.getInteger("radius") == null ? 16 : CONFIG.getInteger("radius")) : getInt(textFieldWidgets.getFirst().getText()));
-        CONFIG.addProperty("priority_type", priorityType);
-        CONFIG.addProperty("sorting_mode", sortingMode);
-        CONFIG.addProperty("display_mode", displayMode);
-        ItemPullerConfig.saveConfig(CONFIG, ItemPullerConfig.CONFIG_FILE);
-    }
-
-    public static int getInt(String str) {
-        try {return Integer.parseInt(str);}
-        catch (NumberFormatException e) {return -1;}
+    public void saveSettings() {
+        ItemPullerConfig.saveSettings(ItemPuller.getInt(textFieldWidgets.getFirst().getText()) == -1 ?
+                (CONFIG.getInteger("radius") == null ? 16 : CONFIG.getInteger("radius")) : ItemPuller.getInt(textFieldWidgets.getFirst().getText()),
+                priorityType, sortingMode, displayMode);
     }
 }

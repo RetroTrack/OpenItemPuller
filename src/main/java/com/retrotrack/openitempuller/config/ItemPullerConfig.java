@@ -17,7 +17,7 @@ import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
 
 public class ItemPullerConfig {
 
-    public static final String CONFIG_DIRECTORY = FabricLoader.getInstance().getConfigDir() + "/ " + MOD_ID + "/";
+    public static final String CONFIG_DIRECTORY = FabricLoader.getInstance().getConfigDir() + "/" + MOD_ID + "/";
     public static final String CONFIG_FILE = CONFIG_DIRECTORY + "config.json";
 
     public static void initConfig() {
@@ -64,6 +64,14 @@ public class ItemPullerConfig {
         }
     }
 
+    public static void saveSettings(int radius, int priorityType, String sortingMode, int displayMode) {
+        CONFIG.putProperty("radius", radius);
+        CONFIG.putProperty("priority_type", priorityType);
+        CONFIG.putProperty("sorting_mode", sortingMode);
+        CONFIG.putProperty("display_mode", displayMode);
+        saveConfig(CONFIG, ItemPullerConfig.CONFIG_FILE);
+    }
+
     // Define the Config class
     public static class Config {
         // Use a map to store key-value pairs for properties
@@ -78,26 +86,6 @@ public class ItemPullerConfig {
             properties.put("sorting_mode", "descending");
         }
 
-        public void addProperty(String key, Object value) {
-            properties.put(key, value);
-        }
-        // Get a property value by key
-        public Object getProperty(String key) {
-            return properties.get(key);
-        }
-        public Integer getInteger(String key) {
-            Object value = properties.get(key);
-            return switch (value) {
-                case Double v -> v.intValue();
-                case Integer i -> i;
-                case Float v -> v.intValue();
-                case null, default -> null;
-            };
-        }
-
-        public String getString(String key) {
-            return properties.get(key).toString();
-        }
         public void fillDefaultValues() {
             // Fill in default values if they are missing
             if (!properties.containsKey("radius")) {
@@ -112,6 +100,28 @@ public class ItemPullerConfig {
             if (!properties.containsKey("sorting_mode")) {
                 properties.put("sorting_mode", "descending");
             }
+        }
+
+        public void putProperty(String key, Object value) {
+            properties.put(key, value);
+        }
+        // Get a property value by key
+        public Object getProperty(String key) {
+            return properties.get(key);
+        }
+
+        public Integer getInteger(String key) {
+            Object value = properties.get(key);
+            return switch (value) {
+                case Double v -> v.intValue();
+                case Integer i -> i;
+                case Float v -> v.intValue();
+                case null, default -> null;
+            };
+        }
+
+        public String getString(String key) {
+            return properties.get(key).toString();
         }
 
         // You can add more methods as needed to access or manipulate properties

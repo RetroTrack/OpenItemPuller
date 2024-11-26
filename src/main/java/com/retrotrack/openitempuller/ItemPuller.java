@@ -20,4 +20,9 @@ public class ItemPuller implements ModInitializer {
         registerCommonPackets();
         registerServerPackets();
     }
+
+    public static int getInt(String str) {
+        try {return Integer.parseInt(str);}
+        catch (NumberFormatException e) {return -1;}
+    }
 }
