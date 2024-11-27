@@ -98,6 +98,7 @@ public class PullItemScreen extends Screen {
         this.i = (this.width - this.backgroundWidth) / 2;
         this.j = (this.height - this.backgroundHeight) / 2;
         List<Item> availableItems = new ArrayList<>();
+
         decodedChests.forEach(decodedChest -> decodedChest.items().forEach((item, id) -> {
             if (!availableItems.contains(item)) availableItems.add(item);
         }));
