@@ -3,6 +3,7 @@ package com.retrotrack.openitempuller.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.util.math.BlockPos;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -84,6 +85,8 @@ public class ItemPullerConfig {
             properties.put("priority_type", 0);
             properties.put("display_mode", 0);
             properties.put("sorting_mode", "descending");
+            properties.put("is_target_block", false);
+            properties.put("target_block_pos", new BlockPos(0,0,0));
         }
 
         public void fillDefaultValues() {
@@ -99,6 +102,12 @@ public class ItemPullerConfig {
             }
             if (!properties.containsKey("sorting_mode")) {
                 properties.put("sorting_mode", "descending");
+            }
+            if (!properties.containsKey("is_target_block")) {
+                properties.put("is_target_block", false);
+            }
+            if (!properties.containsKey("target_block_pos")) {
+                properties.put("target_block_pos", new BlockPos(0,0,0));
             }
         }
 
@@ -119,6 +128,13 @@ public class ItemPullerConfig {
                 case null, default -> null;
             };
         }
+
+        public Boolean getBoolean(String key) {
+            Object value = properties.get(key);
+            if(value instanceof Boolean) return (Boolean) value;
+            return null;
+        }
+
 
         public String getString(String key) {
             return properties.get(key).toString();

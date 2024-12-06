@@ -1,12 +1,14 @@
 package com.retrotrack.openitempuller.networking.payloads;
 
-import com.retrotrack.openitempuller.util.ChestUtil;
+import com.retrotrack.openitempuller.util.BlockEntityUtil;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 
 import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
@@ -24,7 +26,10 @@ public record PullItemsPayload(NbtCompound compound) implements CustomPayload {
 
     public void receiveServer(ServerPlayNetworking.Context context) {
         try {
-            ChestUtil.retrieveItemsFromChest(context.player(), compound);
+            int totalTransferred = BlockEntityUtil.retrieveItemsBlockEntity(context.player(), compound);
+            if (totalTransferred > 0) {
+                context.player().sendMessage(Text.translatable("openitempuller.message.pull_to_target.success", totalTransferred).formatted(Formatting.GREEN), true);
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

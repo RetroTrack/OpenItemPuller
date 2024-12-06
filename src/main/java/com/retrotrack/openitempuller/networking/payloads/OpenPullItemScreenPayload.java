@@ -1,7 +1,7 @@
 package com.retrotrack.openitempuller.networking.payloads;
 
 import com.retrotrack.openitempuller.gui.screen.PullItemScreen;
-import com.retrotrack.openitempuller.util.decoding.NbtChestCoder;
+import com.retrotrack.openitempuller.util.decoding.NbtCoder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -28,6 +28,6 @@ public record OpenPullItemScreenPayload(NbtCompound encodedChests, int serverRad
 
     @Environment(EnvType.CLIENT)
     public void receiveClient(ClientPlayNetworking.Context context) {
-        context.client().setScreen(new PullItemScreen(context.client().currentScreen, NbtChestCoder.decode(encodedChests), serverRadius));
+        context.client().setScreen(new PullItemScreen(context.client().currentScreen, NbtCoder.decode(encodedChests), serverRadius));
     }
 }

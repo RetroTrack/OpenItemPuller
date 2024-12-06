@@ -6,9 +6,9 @@ import com.retrotrack.openitempuller.gui.widget.hover.TextHoverButtonWidget;
 import com.retrotrack.openitempuller.gui.widget.VerticalScrollbarWidget;
 import com.retrotrack.openitempuller.gui.widget.hover.TextHoverWidget;
 import com.retrotrack.openitempuller.networking.payloads.PullItemsPayload;
-import com.retrotrack.openitempuller.util.ChestUtil;
+import com.retrotrack.openitempuller.util.BlockEntityUtil;
 import com.retrotrack.openitempuller.util.RenderUtil;
-import com.retrotrack.openitempuller.util.decoding.DecodedChest;
+import com.retrotrack.openitempuller.util.decoding.DecodedBlockEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -70,21 +70,27 @@ public class PullItemScreen extends Screen {
 
     //Constants
     private final ArrayList<RenderUtil.RenderVariables> renderVariables = new ArrayList<>();
-    private final ArrayList<DecodedChest> decodedChests;
+    private final ArrayList<DecodedBlockEntity> decodedBlockEntities;
     private final int serverRadius;
+    private final boolean isTargetBlock;
 
     //Variables
-    private ArrayList<DecodedChest> chestsWithItem = new ArrayList<>();
+    private ArrayList<DecodedBlockEntity> blockEntitiesWithItem = new ArrayList<>();
     private List<Item> sortedItems;
     private List<Item> filteredList;
     private final HashMap<Item, NbtCompound> pullCompounds = new HashMap<>();
+    private BlockPos targetBlock;
 
-
-    public PullItemScreen(Screen parent, ArrayList<DecodedChest> decodedChests, int serverRadius) {
+    public PullItemScreen(Screen parent, ArrayList<DecodedBlockEntity> decodedBlockEntities, int serverRadius) {
         super(Text.literal(" "));
         this.parent = parent;
-        this.decodedChests = decodedChests;
+        this.decodedBlockEntities = decodedBlockEntities;
         this.serverRadius = serverRadius;
+        this.isTargetBlock = CONFIG.getBoolean("is_target_block");
+        if(this.isTargetBlock) {
+
+            targetBlock = (BlockPos) CONFIG.getProperty("target_block_pos");
+        }
     }
 
     @Override
@@ -99,7 +105,7 @@ public class PullItemScreen extends Screen {
         this.j = (this.height - this.backgroundHeight) / 2;
         List<Item> availableItems = new ArrayList<>();
 
-        decodedChests.forEach(decodedChest -> decodedChest.items().forEach((item, id) -> {
+        decodedBlockEntities.forEach(decodedBlockEntity -> decodedBlockEntity.items().forEach((item, id) -> {
             if (!availableItems.contains(item)) availableItems.add(item);
         }));
         if(CONFIG.getInteger("display_mode") == 0) {
@@ -281,7 +287,7 @@ public class PullItemScreen extends Screen {
             if (count <= 0) continue;
 
             NbtCompound child = new NbtCompound();
-                child.putIntArray("pos", new int[]{chestsWithItem.get(k).pos().getX(), chestsWithItem.get(k).pos().getY(), chestsWithItem.get(k).pos().getZ()});
+                child.putIntArray("source_pos", new int[]{blockEntitiesWithItem.get(k).pos().getX(), blockEntitiesWithItem.get(k).pos().getY(), blockEntitiesWithItem.get(k).pos().getZ()});
                 child.putInt("id", k);
                 child.putString("item", Registries.ITEM.getId(selectedItem).toString());
                 child.putInt("item_count", count);
@@ -290,6 +296,9 @@ public class PullItemScreen extends Screen {
             size++;
         }
         compound.putInt("size", size);
+        compound.putInt("size", size);
+        compound.putBoolean("from_block", isTargetBlock);
+        if(isTargetBlock) compound.putIntArray("target_pos", new int[]{targetBlock.getX(), targetBlock.getY(), targetBlock.getZ()});
         pullCompounds.put(selectedItem, compound);
 
     }
@@ -301,27 +310,29 @@ public class PullItemScreen extends Screen {
         for (int k = 0; k < size; k++) {
             NbtCompound child = compound.getCompound("chest_id_" + k);
             int count = child.getInt("item_count");
-            BlockPos pos = new BlockPos(child.getIntArray("pos")[0], child.getIntArray("pos")[1], child.getIntArray("pos")[2]);
+            BlockPos pos = new BlockPos(child.getIntArray("source_pos")[0], child.getIntArray("source_pos")[1], child.getIntArray("source_pos")[2]);
             chestMap.put(pos, count);
         }
         return chestMap;
     }
 
     public void addChestDisplays() {
-
-        chestsWithItem = ChestUtil.getChestsWithItem(selectedItem, decodedChests);
+        blockEntitiesWithItem = BlockEntityUtil.getChestsWithItem(selectedItem, decodedBlockEntities);
         HashMap<BlockPos, Integer> chestMap = new HashMap<>();
         if(pullCompounds.get(selectedItem) != null) chestMap = loadChestSelection(pullCompounds.get(selectedItem));
-        if(CONFIG.getString("sorting_mode").equals("ascending")) Collections.reverse(chestsWithItem);
+        if(CONFIG.getString("sorting_mode").equals("ascending")) Collections.reverse(blockEntitiesWithItem);
 
-        for (int k = 0; k < chestsWithItem.size(); k++) {
+        for (int k = 0; k < blockEntitiesWithItem.size(); k++) {
             if (k >= 10) break;
             TextHoverWidget widget = new TextHoverWidget(
                     this.i + 105, this.height / 2 - (64 - 14 * k), 65, 14);
-            widget.setTooltip(Tooltip.of(Text.literal(chestsWithItem.get(k).name())));
-            itemCountTexts.add(Text.literal(String.valueOf(chestsWithItem.get(k).items().get(selectedItem))));
+            String name = blockEntitiesWithItem.get(k).name().contains("translatable")
+                    ? Text.translatable(blockEntitiesWithItem.get(k).name().replace("translatable: ", "")).getString()
+                    : blockEntitiesWithItem.get(k).name();
+            widget.setTooltip(Tooltip.of(Text.literal(name + " (" + blockEntitiesWithItem.get(k).pos().toShortString() + ")")));
+            itemCountTexts.add(Text.literal(String.valueOf(blockEntitiesWithItem.get(k).items().get(selectedItem))));
             chestsDisplayHovers.add(widget);
-            chestDisplayTexts.add(Text.literal(StringUtils.abbreviate(chestsWithItem.get(k).name(), 10)));
+            chestDisplayTexts.add(Text.literal(StringUtils.abbreviate(name, 10)));
 
             TextFieldWidget fieldWidget = new TextFieldWidget(textRenderer,
                     this.i + 205, this.height / 2 - (63 - 14 * k),
@@ -330,16 +341,16 @@ public class PullItemScreen extends Screen {
             int finalK = k;
             int itemCount = 0;
             boolean isChecked = false;
-            if(chestMap.get(chestsWithItem.get(finalK).pos()) != null) {
-                itemCount = chestMap.get(chestsWithItem.get(finalK).pos());
-                isChecked = (itemCount == chestsWithItem.get(finalK).items().get(selectedItem));
+            if(chestMap.get(blockEntitiesWithItem.get(finalK).pos()) != null) {
+                itemCount = chestMap.get(blockEntitiesWithItem.get(finalK).pos());
+                isChecked = (itemCount == blockEntitiesWithItem.get(finalK).items().get(selectedItem));
             }
 
             fieldWidget.setText(String.valueOf(itemCount));
             textFieldWidgets.add(fieldWidget);
             checkBoxWidgets.add(IPCheckboxWidget.builder(Text.literal(""), textRenderer)
                     .callback((checkbox, checked) -> textFieldWidgets.get(finalK)
-                            .setText(checked ? String.valueOf(chestsWithItem.get(finalK).items().get(selectedItem)) :  ""))
+                            .setText(checked ? String.valueOf(blockEntitiesWithItem.get(finalK).items().get(selectedItem)) :  ""))
                     .pos(this.i + 240, this.height / 2 - (63 - 14 * k))
                     .checked(isChecked).build());
 
