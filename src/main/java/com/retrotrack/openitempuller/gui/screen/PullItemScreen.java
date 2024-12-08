@@ -296,7 +296,6 @@ public class PullItemScreen extends Screen {
             size++;
         }
         compound.putInt("size", size);
-        compound.putInt("size", size);
         compound.putBoolean("from_block", isTargetBlock);
         if(isTargetBlock) compound.putIntArray("target_pos", new int[]{targetBlock.getX(), targetBlock.getY(), targetBlock.getZ()});
         pullCompounds.put(selectedItem, compound);
