@@ -161,6 +161,8 @@ public class SettingsScreen extends Screen {
                 (button) -> {
                     sortingMode = (sortingMode.equals("ascending") ? "descending" : "ascending");
                     clearWidgets();
+                    addWidgets();
+                    addChildren();
                 });
         displayButton = ButtonWidget.builder(Text.translatable("openitempuller.settings_screen.option_2.mode_" + displayMode), button -> {
                     if(displayMode >= 1) displayMode = 0;
