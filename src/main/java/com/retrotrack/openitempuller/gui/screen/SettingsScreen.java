@@ -60,7 +60,7 @@ public class SettingsScreen extends Screen {
     @Override
     public void close() {
         if (client == null) return;
-        saveFiles();
+        saveSettings();
         client.setScreen(parent);
     }
 
@@ -69,16 +69,15 @@ public class SettingsScreen extends Screen {
         super.init();
         this.i = (this.width - this.backgroundWidth) / 2;
         this.j = (this.height - this.backgroundHeight) / 2;
-        initButtons();
+        clearWidgets();
+        addWidgets();
+        addChildren();
     }
 
-    private void initButtons(){
+    private void clearWidgets(){
         this.clearChildren();
         textFieldWidgets.clear();
         textWidgets.clear();
-        this.addWidgets();
-        this.addChildren();
-
     }
 
     @Override
@@ -116,12 +115,12 @@ public class SettingsScreen extends Screen {
         if (this.client == null) return;
         settingsButton = new TexturedButtonWidget(this.i + 217, this.height / 2 - 100, 20, 18, 0, 0, 19,
                 new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/settings_button_merged.png"), (button) -> {
-            saveFiles();
+            saveSettings();
             client.setScreen(parent);
         });
         pullButton = new TexturedButtonWidget(this.i + 237, this.height / 2 - 100, 20, 18, 0, 0, 19,
                 new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/pull_button_merged.png"), (button) -> {
-            saveFiles();
+            saveSettings();
             if(parent instanceof PullItemScreen) client.setScreen(parent);
             else ClientPlayNetworking.send(new CheckChestPacket(ItemPuller.CONFIG.getInteger("radius")));
         });
@@ -137,21 +136,7 @@ public class SettingsScreen extends Screen {
                 })
                 .dimensions(this.i + 85, this.height / 2 - 58, 80, 18)
                 .build();
-        sortButton = new TexturedButtonWidget(this.i + 166, this.height / 2 - 58, 18, 18, 0, 0, 19,
-                sortingMode.equals("ascending") ?
-                        new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/sort_button_ascending_merged.png")
-                        : new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/sort_button_descending_merged.png"),
-                (button) -> {
-                    sortingMode = (sortingMode.equals("ascending") ? "descending" : "ascending");
-                    initButtons();
-                });
-        displayButton = ButtonWidget.builder(Text.translatable("openitempuller.settings_screen.option_2.mode_" + displayMode), button -> {
-                    if(displayMode >= 1) displayMode = 0;
-                    else displayMode++;
-                    button.setMessage(Text.translatable("openitempuller.settings_screen.option_2.mode_" + displayMode));
-                })
-                .dimensions(this.i + 85, this.height / 2 - 38, 80, 18)
-                .build();
+
         for (int k = 0; k < 3; k++) {
 
             TextHoverWidget widget = new TextHoverWidget(this.i + 8, this.height / 2 - (78 - 20 * k), 70, 20);
@@ -161,21 +146,28 @@ public class SettingsScreen extends Screen {
             textWidgets.add(Text.translatable("openitempuller.settings_screen.option_" + k));
             textHovers.add(widget);
         }
-
-
+        sortButton = new TexturedButtonWidget(this.i + 166, this.height / 2 - 58, 18, 18, 0, 0, 19,
+                sortingMode.equals("ascending") ?
+                        new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/sort_button_ascending_merged.png")
+                        : new Identifier(MOD_ID, "textures/gui/sprites/button/atlas/sort_button_descending_merged.png"),
+                (button) -> {
+                    sortingMode = (sortingMode.equals("ascending") ? "descending" : "ascending");
+                    clearWidgets();
+                    addWidgets();
+                    addChildren();
+                });
+        displayButton = ButtonWidget.builder(Text.translatable("openitempuller.settings_screen.option_2.mode_" + displayMode), button -> {
+                    if(displayMode >= 1) displayMode = 0;
+                    else displayMode++;
+                    button.setMessage(Text.translatable("openitempuller.settings_screen.option_2.mode_" + displayMode));
+                })
+                .dimensions(this.i + 85, this.height / 2 - 38, 80, 18)
+                .build();
     }
 
-    public void saveFiles() {
-        CONFIG.addProperty("radius", getInt(textFieldWidgets.get(0).getText()) == -1 ?
-                (CONFIG.getInteger("radius") == null ? 16 : CONFIG.getInteger("radius")) : getInt(textFieldWidgets.get(0).getText()));
-        CONFIG.addProperty("priority_type", priorityType);
-        CONFIG.addProperty("sorting_mode", sortingMode);
-        CONFIG.addProperty("display_mode", displayMode);
-        ItemPullerConfig.saveConfig(CONFIG, ItemPullerConfig.CONFIG_FILE);
-    }
-
-    public static int getInt(String str) {
-        try {return Integer.parseInt(str);}
-        catch (NumberFormatException e) {return -1;}
+    public void saveSettings() {
+        ItemPullerConfig.saveSettings(ItemPuller.getInt(textFieldWidgets.get(0).getText()) == -1 ?
+                (CONFIG.getInteger("radius") == null ? 16 : CONFIG.getInteger("radius")) : ItemPuller.getInt(textFieldWidgets.get(0).getText()),
+                priorityType, sortingMode, displayMode);
     }
 }

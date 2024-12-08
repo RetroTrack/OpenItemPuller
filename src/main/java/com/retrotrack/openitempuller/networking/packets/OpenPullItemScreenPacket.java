@@ -1,7 +1,7 @@
 package com.retrotrack.openitempuller.networking.packets;
 
 import com.retrotrack.openitempuller.gui.screen.PullItemScreen;
-import com.retrotrack.openitempuller.util.decoding.NbtChestCoder;
+import com.retrotrack.openitempuller.util.decoding.NbtCoder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.networking.v1.FabricPacket;
@@ -36,7 +36,7 @@ public class OpenPullItemScreenPacket implements FabricPacket {
     @Environment(EnvType.CLIENT)
     public static void receiveClient(OpenPullItemScreenPacket packet, ClientPlayerEntity player, PacketSender sender) {
         MinecraftClient client = MinecraftClient.getInstance();
-        client.setScreen(new PullItemScreen(client.currentScreen, NbtChestCoder.decode(packet.encodedChests), packet.serverRadius));
+        client.setScreen(new PullItemScreen(client.currentScreen, NbtCoder.decode(packet.encodedChests), packet.serverRadius));
     }
 
     @Override
