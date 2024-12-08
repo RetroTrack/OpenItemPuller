@@ -3,6 +3,7 @@ package com.retrotrack.openitempuller.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.util.math.BlockPos;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -17,7 +18,7 @@ import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
 
 public class ItemPullerConfig {
 
-    public static final String CONFIG_DIRECTORY = FabricLoader.getInstance().getConfigDir() + "/ " + MOD_ID + "/";
+    public static final String CONFIG_DIRECTORY = FabricLoader.getInstance().getConfigDir() + "/" + MOD_ID + "/";
     public static final String CONFIG_FILE = CONFIG_DIRECTORY + "config.json";
 
     public static void initConfig() {
@@ -64,6 +65,14 @@ public class ItemPullerConfig {
         }
     }
 
+    public static void saveSettings(int radius, int priorityType, String sortingMode, int displayMode) {
+        CONFIG.putProperty("radius", radius);
+        CONFIG.putProperty("priority_type", priorityType);
+        CONFIG.putProperty("sorting_mode", sortingMode);
+        CONFIG.putProperty("display_mode", displayMode);
+        saveConfig(CONFIG, ItemPullerConfig.CONFIG_FILE);
+    }
+
     // Define the Config class
     public static class Config {
         // Use a map to store key-value pairs for properties
@@ -76,28 +85,10 @@ public class ItemPullerConfig {
             properties.put("priority_type", 0);
             properties.put("display_mode", 0);
             properties.put("sorting_mode", "descending");
+            properties.put("is_target_block", false);
+            properties.put("target_block_pos", new BlockPos(0,0,0));
         }
 
-        public void addProperty(String key, Object value) {
-            properties.put(key, value);
-        }
-        // Get a property value by key
-        public Object getProperty(String key) {
-            return properties.get(key);
-        }
-        public Integer getInteger(String key) {
-            Object value = properties.get(key);
-            return switch (value) {
-                case Double v -> v.intValue();
-                case Integer i -> i;
-                case Float v -> v.intValue();
-                case null, default -> null;
-            };
-        }
-
-        public String getString(String key) {
-            return properties.get(key).toString();
-        }
         public void fillDefaultValues() {
             // Fill in default values if they are missing
             if (!properties.containsKey("radius")) {
@@ -112,6 +103,41 @@ public class ItemPullerConfig {
             if (!properties.containsKey("sorting_mode")) {
                 properties.put("sorting_mode", "descending");
             }
+            if (!properties.containsKey("is_target_block")) {
+                properties.put("is_target_block", false);
+            }
+            if (!properties.containsKey("target_block_pos")) {
+                properties.put("target_block_pos", new BlockPos(0,0,0));
+            }
+        }
+
+        public void putProperty(String key, Object value) {
+            properties.put(key, value);
+        }
+        // Get a property value by key
+        public Object getProperty(String key) {
+            return properties.get(key);
+        }
+
+        public Integer getInteger(String key) {
+            Object value = properties.get(key);
+            return switch (value) {
+                case Double v -> v.intValue();
+                case Integer i -> i;
+                case Float v -> v.intValue();
+                case null, default -> null;
+            };
+        }
+
+        public Boolean getBoolean(String key) {
+            Object value = properties.get(key);
+            if(value instanceof Boolean) return (Boolean) value;
+            return null;
+        }
+
+
+        public String getString(String key) {
+            return properties.get(key).toString();
         }
 
         // You can add more methods as needed to access or manipulate properties

@@ -1,5 +1,6 @@
 package com.retrotrack.openitempuller.client;
 
+import com.retrotrack.openitempuller.event.KeyInputHandler;
 import net.fabricmc.api.ClientModInitializer;
 
 import static com.retrotrack.openitempuller.networking.ModNetworking.registerClientPackets;
@@ -11,5 +12,6 @@ public class ItemPullerClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         registerClientPackets();
+        KeyInputHandler.register();
     }
 }

@@ -11,5 +11,12 @@
   "openitempuller.settings_screen.option_2": "Display mode",
   "openitempuller.settings_screen.option_2.tooltip": "Changes the way the item list is displayed",
   "openitempuller.settings_screen.option_2.mode_0": "All",
-  "openitempuller.settings_screen.option_2.mode_1": "Available"
+  "openitempuller.settings_screen.option_2.mode_1": "Available",
+  "openitempuller.key.category.openitempuller": "OpenItemPuller",
+  "openitempuller.key.set_target_block": "Set target storage",
+  "openitempuller.key.remove_target_block": "Remove target storage",
+  "openitempuller.message.set_target_block.success": "Set target storage to: (%1$s)",
+  "openitempuller.message.remove_target_block": "Target storage set to player inventory",
+  "openitempuller.message.pull_to_target.error": "Couldn't pull to target storage, items where pulled to your inventory",
+  "openitempuller.message.pull_to_target.success": "Successfully pulled %1$s items to storage"
 }
