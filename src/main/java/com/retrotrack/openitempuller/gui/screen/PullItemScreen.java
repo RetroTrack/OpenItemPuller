@@ -267,7 +267,7 @@ public class PullItemScreen extends Screen {
             itemSelectButtons.add(itemButton);
             if (!(k > 10)) {
                 itemSelectTexts.add(Text.literal(StringUtils.abbreviate(Text.translatable(item.getTranslationKey()).getString(), 12)));
-                renderVariables.add(new RenderUtil.RenderVariables(item.getDefaultStack(), this.i + 13, this.height / 2 - (71 - 14 * k), 0.75f, client.getItemRenderer()));
+                renderVariables.add(new RenderUtil.RenderVariables(item.getDefaultStack(), this.i + 13, this.height / 2 - (71 - 14 * k), 0.75f));
             }
         }
     }

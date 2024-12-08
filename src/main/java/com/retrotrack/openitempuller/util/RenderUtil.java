@@ -1,20 +1,29 @@
 package com.retrotrack.openitempuller.util;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.DiffuseLighting;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.item.ItemRenderer;
-import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.*;
+import net.minecraft.client.render.item.ItemRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ModelTransformationMode;
 
+@Environment(EnvType.CLIENT)
 public class RenderUtil {
 
+    private static void renderItemAt(ItemStack item, int x, int y, float scaleFactor) {
+        MinecraftClient client = MinecraftClient.getInstance();
 
-    private static void renderItemAt(ItemStack item, int x, int y, float scaleFactor, ItemRenderer itemRenderer) {
-        BakedModel model = itemRenderer.getModel(item, null, null, 0);
+        ItemRenderState renderState = new ItemRenderState();
+        client.getItemModelManager().update(renderState, item, ModelTransformationMode.GUI, false,null, null, 0);
+        VertexConsumerProvider.Immediate immediateVertexConsumer = client.getBufferBuilders().getEntityVertexConsumers();
+
+        boolean disableGuiDepthLighting = !renderState.isSideLit();
+        if (disableGuiDepthLighting) {
+            immediateVertexConsumer.draw();
+            DiffuseLighting.disableGuiDepthLighting();
+        }
 
         MatrixStack contextMatrices = new MatrixStack();
         contextMatrices.push();
@@ -22,24 +31,19 @@ public class RenderUtil {
         contextMatrices.scale(16.0F, -16.0F, 16.0F);
         contextMatrices.scale(scaleFactor, scaleFactor, scaleFactor);
 
-        VertexConsumerProvider.Immediate immediateVertexConsumer = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
-        boolean disableGuiDepthLighting = !model.isSideLit();
-        if (disableGuiDepthLighting) {
-            DiffuseLighting.disableGuiDepthLighting();
-        }
-
-        itemRenderer.renderItem(item, ModelTransformationMode.GUI, false, contextMatrices, immediateVertexConsumer, 15728880, OverlayTexture.DEFAULT_UV, model);
+        renderState.render(contextMatrices, immediateVertexConsumer, LightmapTextureManager.MAX_LIGHT_COORDINATE, OverlayTexture.DEFAULT_UV);
         immediateVertexConsumer.draw();
+
+        contextMatrices.pop();
         if (disableGuiDepthLighting) {
             DiffuseLighting.enableGuiDepthLighting();
         }
 
-        contextMatrices.pop();
     }
 
     public static void renderItemAt(RenderVariables renderVariables) {
-        renderItemAt(renderVariables.itemStack, renderVariables.x, renderVariables.y, renderVariables.scaleFactor, renderVariables.itemRenderer);
+        renderItemAt(renderVariables.itemStack, renderVariables.x, renderVariables.y, renderVariables.scaleFactor);
     }
 
-    public record RenderVariables(ItemStack itemStack, int x, int y, float scaleFactor, ItemRenderer itemRenderer) {}
+    public record RenderVariables(ItemStack itemStack, int x, int y, float scaleFactor) {}
 }
