@@ -140,6 +140,7 @@ public class PullItemScreen extends Screen {
         }
         this.addButtons();
         this.addChildren();
+        this.setFocused(searchBar);
     }
 
     @Override
