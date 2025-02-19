@@ -15,6 +15,7 @@
   "openitempuller.key.category.openitempuller": "OpenItemPuller",
   "openitempuller.key.set_target_block": "Set target storage",
   "openitempuller.key.remove_target_block": "Remove target storage",
+  "openitempuller.key.open_pull_screen": "Open pull screen",
   "openitempuller.message.set_target_block.success": "Set target storage to: (%1$s)",
   "openitempuller.message.remove_target_block": "Target storage set to player inventory",
   "openitempuller.message.pull_to_target.error": "Couldn't pull to target storage, items where pulled to your inventory",
