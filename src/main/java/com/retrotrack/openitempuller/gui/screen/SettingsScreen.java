@@ -76,7 +76,8 @@ public class SettingsScreen extends Screen {
     }
 
     private void clearWidgets(){
-        this.clearChildren();
+        if(!this.children().isEmpty())
+            this.clearChildren();
         textFieldWidgets.clear();
         textWidgets.clear();
     }
