@@ -33,9 +33,6 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 }
 
-test {
-    useJUnitPlatform()
-}
 
 processResources {
     inputs.property "version", project.version
