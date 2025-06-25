@@ -80,7 +80,7 @@ public class BlockEntityUtil {
             if (child == null) continue;
             BlockPos sourcePos = new BlockPos(child.getIntArray("source_pos")[0], child.getIntArray("source_pos")[1], child.getIntArray("source_pos")[2]);
 
-            BlockEntity blockEntity = BlockEntitySearchUtil.isUnlocked(player.getServerWorld(), sourcePos);
+            BlockEntity blockEntity = BlockEntitySearchUtil.isUnlocked(player, sourcePos);
             if (blockEntity == null) continue;
 
             totalItemsTransferred += transfer(player, child.getString("item"), child.getInt("item_count"), sourcePos, targetPos, fromBlock);

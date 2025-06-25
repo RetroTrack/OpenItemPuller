@@ -10,6 +10,7 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.Text;
@@ -30,27 +31,7 @@ public class KeyInputHandler {
     public static KeyBinding openPullScreenKey;
 
     public static void registerKeyInputs(){
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (client.player == null) return;
-            if(setTargetKey.isPressed()){
-
-                //Sets target to block player is currently looking at and turn on block targeting
-                BlockPos blockPos = BlockRaycastHelper.getBlockPlayerIsLookingAt(client.player);
-                if (client.world != null && blockPos != null && BlockEntitySearchUtil.isValidBlockEntity(blockPos, client.world)) {
-                    ItemPuller.CONFIG.putProperty("target_block_pos", blockPos);
-                    ItemPuller.CONFIG.putProperty("is_target_block", true);
-                    ItemPullerConfig.saveConfig(ItemPuller.CONFIG, ItemPullerConfig.CONFIG_FILE);
-
-                    client.player.sendMessage(Text.translatable("openitempuller.message.set_target_block.success", blockPos.toShortString()).formatted(Formatting.GREEN), true);
-                }
-            }else if(removeTargetKey.isPressed()){
-                ItemPuller.CONFIG.putProperty("is_target_block", false);
-                ItemPullerConfig.saveConfig(ItemPuller.CONFIG, ItemPullerConfig.CONFIG_FILE);
-                client.player.sendMessage(Text.translatable("openitempuller.message.remove_target_block").formatted(Formatting.RED), true);
-            }else if(openPullScreenKey.isPressed()){
-                ClientPlayNetworking.send(new CheckChestPayload(ItemPuller.CONFIG.getInteger("radius")));
-            }
-        });
+        ClientTickEvents.END_CLIENT_TICK.register(KeyInputHandler::handleKeyInputTick);
     }
 
     public static void register() {
@@ -59,5 +40,38 @@ public class KeyInputHandler {
         openPullScreenKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(KEY_OPEN_PULL_SCREEN, InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_O, KEY_CATEGORY_OPENITEMPULLER));
 
         registerKeyInputs();
+    }
+
+    private static void handleKeyInputTick(MinecraftClient client) {
+        if (client.player == null) return;
+        if (setTargetKey.isPressed()) {
+            setTargetBlock(client);
+            return;
+        }
+        if (removeTargetKey.isPressed()) {
+            removeTargetBlock(client);
+            return;
+        }
+        if (openPullScreenKey.isPressed()) {
+            ClientPlayNetworking.send(new CheckChestPayload(ItemPuller.CONFIG.getInteger("radius")));
+        }
+    }
+
+    private static void removeTargetBlock(MinecraftClient client) {
+        ItemPuller.CONFIG.putProperty("is_target_block", false);
+        ItemPullerConfig.saveConfig(ItemPuller.CONFIG, ItemPullerConfig.CONFIG_FILE);
+        client.player.sendMessage(Text.translatable("openitempuller.message.remove_target_block").formatted(Formatting.RED), true);
+    }
+
+    private static void setTargetBlock(MinecraftClient client) {
+        //Sets target to block player is currently looking at and turn on block targeting
+        BlockPos blockPos = BlockRaycastHelper.getBlockPlayerIsLookingAt(client.player);
+        if (client.world != null && blockPos != null && BlockEntitySearchUtil.isValidBlockEntity(blockPos, client.world)) {
+            ItemPuller.CONFIG.putProperty("target_block_pos", blockPos);
+            ItemPuller.CONFIG.putProperty("is_target_block", true);
+            ItemPullerConfig.saveConfig(ItemPuller.CONFIG, ItemPullerConfig.CONFIG_FILE);
+
+            client.player.sendMessage(Text.translatable("openitempuller.message.set_target_block.success", blockPos.toShortString()).formatted(Formatting.GREEN), true);
+        }
     }
 }

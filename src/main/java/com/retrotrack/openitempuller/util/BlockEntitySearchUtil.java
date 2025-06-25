@@ -22,8 +22,8 @@ public class BlockEntitySearchUtil {
         return sortByDistance(findBlockEntitiesAroundPlayer(world, player, radius), player);
     }
 
-    public static BlockEntity isUnlocked(ServerWorld world, BlockPos pos) {
-        BlockEntity blockEntity = world.getBlockEntity(pos);
+    public static BlockEntity isUnlocked(ServerPlayerEntity player, BlockPos pos) {
+        BlockEntity blockEntity = player.getServerWorld().getBlockEntity(pos);
         if (blockEntity instanceof LootableContainerBlockEntity && ((LootableContainerBlockEntity) blockEntity).getLootTable() != null) return null;
 
         return blockEntity;
