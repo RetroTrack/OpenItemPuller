@@ -1,6 +1,6 @@
 # OpenItemPuller
 
-#⚠️Temporary delay on updates (Sorry!), due too a busy work shedule and a summier holiday coming up.
+# ⚠️Temporary delay on updates (Sorry!), due too a busy work shedule and a summier holiday coming up.
 
 [![Watch the video](https://img.youtube.com/vi/pHaO0sO9Cjo/maxresdefault.jpg)](https://youtu.be/pHaO0sO9Cjo)
 
