@@ -1,5 +1,6 @@
 package com.retrotrack.openitempuller.gui.screen;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.retrotrack.openitempuller.ItemPuller;
 import com.retrotrack.openitempuller.config.ItemPullerConfig;
 import com.retrotrack.openitempuller.gui.widget.hover.TextHoverWidget;
@@ -7,9 +8,11 @@ import com.retrotrack.openitempuller.networking.payloads.CheckChestPayload;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.advancement.AdvancementsScreen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -87,7 +90,7 @@ public class SettingsScreen extends Screen {
         assert this.client != null;
         if (this.client.world != null) {
             this.renderInGameBackground(context);
-            context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, this.i, this.j - 8, 0, 0, this.backgroundWidth, this.backgroundHeight, backgroundWidth, backgroundHeight);
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, TEXTURE, this.i, this.j - 8, 0, 0, this.backgroundWidth, this.backgroundHeight, backgroundWidth, backgroundHeight);
         } else {
             this.renderDarkening(context);
         }

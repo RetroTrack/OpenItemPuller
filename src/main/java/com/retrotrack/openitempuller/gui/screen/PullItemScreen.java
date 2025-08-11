@@ -1,5 +1,6 @@
 package com.retrotrack.openitempuller.gui.screen;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.retrotrack.openitempuller.ItemPuller;
 import com.retrotrack.openitempuller.gui.widget.IPCheckboxWidget;
 import com.retrotrack.openitempuller.gui.widget.hover.TextHoverButtonWidget;
@@ -12,6 +13,7 @@ import com.retrotrack.openitempuller.util.decoding.DecodedBlockEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.screen.Screen;
@@ -150,7 +152,7 @@ public class PullItemScreen extends Screen {
         if (this.client.world != null) {
             this.renderInGameBackground(context);
 
-            context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, this.i, this.j - 8, 0, 0,
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, TEXTURE, this.i, this.j - 8, 0, 0,
                     this.backgroundWidth, this.backgroundHeight, backgroundWidth, backgroundHeight);
         }
     }
@@ -304,14 +306,16 @@ public class PullItemScreen extends Screen {
     }
 
     public HashMap<BlockPos, Integer> loadChestSelection(NbtCompound compound) {
-        int size = compound.getInt("size");
+        Optional<Integer> size = compound.getInt("size");
+        if (size.isEmpty()) return new HashMap<>();
         HashMap<BlockPos, Integer> chestMap = new HashMap<>();
 
-        for (int k = 0; k < size; k++) {
-            NbtCompound child = compound.getCompound("chest_id_" + k);
-            int count = child.getInt("item_count");
-            BlockPos pos = new BlockPos(child.getIntArray("source_pos")[0], child.getIntArray("source_pos")[1], child.getIntArray("source_pos")[2]);
-            chestMap.put(pos, count);
+        for (int k = 0; k < size.get(); k++) {
+            Optional<NbtCompound> child = compound.getCompound("chest_id_" + k);
+            Optional<Integer> count = child.flatMap(nbtCompound -> nbtCompound.getInt("item_count"));
+            if (child.isEmpty() || count.isEmpty()) continue;
+            BlockPos pos = new BlockPos(child.get().getIntArray("source_pos").get()[0], child.get().getIntArray("source_pos").get()[1], child.get().getIntArray("source_pos").get()[2]);
+            chestMap.put(pos, count.get());
         }
         return chestMap;
     }

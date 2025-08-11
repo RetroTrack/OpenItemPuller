@@ -72,7 +72,7 @@ public abstract class NonClickableWidget
         this.hovered = context.scissorContains(mouseX, mouseY) && mouseX >= this.getX()
                 && mouseY >= this.getY() && mouseX < this.getX() + this.width && mouseY < this.getY() + this.height;
         this.renderWidget(context, mouseX, mouseY, delta);
-        this.tooltip.render(this.isHovered(), this.isFocused(), this.getNavigationFocus());
+        this.tooltip.render(context, mouseX, mouseY, this.isHovered(), this.isFocused(), this.getNavigationFocus());
     }
 
     public void setTooltip(@Nullable Tooltip tooltip) {

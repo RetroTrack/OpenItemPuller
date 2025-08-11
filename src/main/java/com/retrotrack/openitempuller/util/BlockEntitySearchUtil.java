@@ -23,7 +23,7 @@ public class BlockEntitySearchUtil {
     }
 
     public static BlockEntity isUnlocked(ServerPlayerEntity player, BlockPos pos) {
-        BlockEntity blockEntity = player.getServerWorld().getBlockEntity(pos);
+        BlockEntity blockEntity = player.getWorld().getBlockEntity(pos);
         if (blockEntity instanceof LootableContainerBlockEntity && ((LootableContainerBlockEntity) blockEntity).getLootTable() != null) return null;
 
         return blockEntity;

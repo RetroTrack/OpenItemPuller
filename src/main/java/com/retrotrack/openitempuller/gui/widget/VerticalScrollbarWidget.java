@@ -1,7 +1,9 @@
 package com.retrotrack.openitempuller.gui.widget;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.screen.narration.NarrationPart;
@@ -37,7 +39,7 @@ public class VerticalScrollbarWidget extends ClickableWidget {
 
     @Override
     protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.drawTexture(RenderLayer::getGuiTextured,TEXTURE, this.x, this.y + (int) ((float) scrollPos / scrollHeight * height),
+        context.drawTexture(RenderPipelines.GUI_TEXTURED,TEXTURE, this.x, this.y + (int) ((float) scrollPos / scrollHeight * height),
                 0, 0, 7, 15, 7, 15);
 
     }

@@ -1,10 +1,12 @@
 package com.retrotrack.openitempuller.gui.widget;
 
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.screen.narration.NarrationPart;
@@ -92,7 +94,7 @@ public class IPCheckboxWidget extends PressableWidget {
         }
 
         int i = getCheckboxSize(textRenderer);
-        context.drawGuiTexture(RenderLayer::getGuiTextured, identifier, this.getX(), this.getY(), i, i, ColorHelper.getWhite(this.alpha));
+        context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, identifier, this.getX(), this.getY(), i, i, ColorHelper.getWhite(this.alpha));
         int j = this.getX() + i + 4;
         int k = this.getY() + i / 2 - this.textWidget.getHeight() / 2;
         this.textWidget.setPosition(j, k);

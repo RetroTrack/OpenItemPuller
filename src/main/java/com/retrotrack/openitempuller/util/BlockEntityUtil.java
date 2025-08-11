@@ -28,6 +28,7 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.retrotrack.openitempuller.ItemPuller.CONFIG;
@@ -35,7 +36,7 @@ import static com.retrotrack.openitempuller.ItemPuller.CONFIG;
 public class BlockEntityUtil {
 
     public static BlockPos getConnectedChestPos(ServerPlayerEntity player, BlockPos chestPos) {
-        World world = player.getServerWorld();
+        World world = player.getWorld();
         if(!(world.getBlockEntity(chestPos) instanceof ChestBlockEntity)) return null;
         if (!(world.getBlockState(chestPos).getBlock() instanceof ChestBlock)) return null; // Return null if the block is not a chest
 
@@ -68,22 +69,34 @@ public class BlockEntityUtil {
     }
 
     public static int retrieveItemsBlockEntity(ServerPlayerEntity player, NbtCompound compound) {
-        int size = compound.getInt("size");
+        Optional<Integer> size = compound.getInt("size");
         int totalItemsTransferred = 0;
 
-        boolean fromBlock = compound.getBoolean("from_block");
+        Optional<Boolean> fromBlock = compound.getBoolean("from_block");
+        if (size.isEmpty() || fromBlock.isEmpty()) {
+            player.sendMessage(Text.translatable("openitempuller.message.pull_to_target.error").formatted(Formatting.RED), true);
+            return 0; // Exit early if size or fromBlock is not present
+        }
         BlockPos targetPos = null;
-        if(fromBlock) targetPos = new BlockPos(compound.getIntArray("target_pos")[0], compound.getIntArray("target_pos")[1], compound.getIntArray("target_pos")[2]);
+        if(compound.getIntArray("target_pos").isEmpty()) {
+            player.sendMessage(Text.translatable("openitempuller.message.pull_to_target.error").formatted(Formatting.RED), true);
+            return 0; // Exit early if target position is not present
+        }
+        if(fromBlock.get()) targetPos = new BlockPos(compound.getIntArray("target_pos").get()[0], compound.getIntArray("target_pos").get()[1], compound.getIntArray("target_pos").get()[2]);
 
-        for (int i = 0; i < size; i++) {
-            NbtCompound child = compound.getCompound("chest_id_" + i);
-            if (child == null) continue;
-            BlockPos sourcePos = new BlockPos(child.getIntArray("source_pos")[0], child.getIntArray("source_pos")[1], child.getIntArray("source_pos")[2]);
+        for (int i = 0; i < size.get(); i++) {
+            if(compound.getCompound("chest_id_" + i).isEmpty()) continue; // Skip if the chest ID is not present
+            NbtCompound child = compound.getCompound("chest_id_" + i).get();
+            if(child.getIntArray("source_pos").isEmpty()) continue; // Skip if the source position is not present
+            BlockPos sourcePos = new BlockPos(child.getIntArray("source_pos").get()[0], child.getIntArray("source_pos").get()[1], child.getIntArray("source_pos").get()[2]);
 
             BlockEntity blockEntity = BlockEntitySearchUtil.isUnlocked(player, sourcePos);
             if (blockEntity == null) continue;
-
-            totalItemsTransferred += transfer(player, child.getString("item"), child.getInt("item_count"), sourcePos, targetPos, fromBlock);
+            if(child.getString("item").isEmpty() || child.getInt("item_count").isEmpty()) {
+                player.sendMessage(Text.translatable("openitempuller.message.pull_to_target.error").formatted(Formatting.RED), true);
+                continue; // Skip if item or item count is not present
+            }
+            totalItemsTransferred += transfer(player, child.getString("item").get(), child.getInt("item_count").get(), sourcePos, targetPos, fromBlock.get());
         }
         return totalItemsTransferred;
     }
@@ -96,18 +109,18 @@ public class BlockEntityUtil {
         int itemsTransferred = 0;
 
         // Get inventories required for transferring items
-        Inventory sourceInventory = HopperBlockEntity.getInventoryAt(player.getServerWorld(), sourcePos);
+        Inventory sourceInventory = HopperBlockEntity.getInventoryAt(player.getWorld(), sourcePos);
         Inventory targetInventory = null;
 
         if (fromBlock) {
-            targetInventory = HopperBlockEntity.getInventoryAt(player.getServerWorld(), targetPos);
+            targetInventory = HopperBlockEntity.getInventoryAt(player.getWorld(), targetPos);
 
             // If no valid inventory is found, check for storage
             if (targetInventory == null) {
-                Storage<ItemVariant> targetStorage = getStorage(targetPos, player.getServerWorld(), null, false);
+                Storage<ItemVariant> targetStorage = getStorage(targetPos, player.getWorld(), null, false);
 
                 if (targetStorage != null) {
-                    Storage<ItemVariant> sourceStorage = getStorage(sourcePos, player.getServerWorld(), null, false);
+                    Storage<ItemVariant> sourceStorage = getStorage(sourcePos, player.getWorld(), null, false);
 
                     if (sourceStorage != null) {
                         itemsTransferred += transferFromStorage(sourceStorage, targetStorage, item, count);
@@ -124,11 +137,11 @@ public class BlockEntityUtil {
 
         // Check block if contains inventory or else check if it has a storage
         if (sourceInventory == null) {
-            Storage<ItemVariant> sourceStorage = getStorage(sourcePos, player.getServerWorld(), null, false);
+            Storage<ItemVariant> sourceStorage = getStorage(sourcePos, player.getWorld(), null, false);
             Storage<ItemVariant> targetStorage = null;
 
             if (fromBlock) {
-                targetStorage = getStorage(targetPos, player.getServerWorld(), null, false);
+                targetStorage = getStorage(targetPos, player.getWorld(), null, false);
             }
             if (targetStorage == null) {
                 targetStorage = getStorage(null, null, player, true);

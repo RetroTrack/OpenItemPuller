@@ -3,42 +3,37 @@ package com.retrotrack.openitempuller.util;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.item.ItemRenderState;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.render.item.ItemRenderer;
+import net.minecraft.client.render.LightmapTextureManager;
+import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ModelTransformationMode;
+import net.minecraft.client.render.OverlayTexture;
 
 @Environment(EnvType.CLIENT)
 public class RenderUtil {
 
     private static void renderItemAt(ItemStack item, int x, int y, float scaleFactor) {
         MinecraftClient client = MinecraftClient.getInstance();
+        ItemRenderer itemRenderer = client.getItemRenderer();
 
-        ItemRenderState renderState = new ItemRenderState();
-        client.getItemModelManager().update(renderState, item, ModelTransformationMode.GUI, false,null, null, 0);
-        VertexConsumerProvider.Immediate immediateVertexConsumer = client.getBufferBuilders().getEntityVertexConsumers();
+        // Prepare the matrix stack
+        MatrixStack matrices = new MatrixStack();
+        matrices.push();
+        matrices.translate(x, y, 100.0F);
+        matrices.scale(scaleFactor * 16.0F, scaleFactor * -16.0F, scaleFactor * 16.0F);
 
-        boolean disableGuiDepthLighting = !renderState.isSideLit();
-        if (disableGuiDepthLighting) {
-            immediateVertexConsumer.draw();
-            DiffuseLighting.disableGuiDepthLighting();
-        }
+        // Get the vertex consumer provider from the client
+        VertexConsumerProvider.Immediate vertexConsumers = client.getBufferBuilders().getEntityVertexConsumers();
 
-        MatrixStack contextMatrices = new MatrixStack();
-        contextMatrices.push();
-        contextMatrices.translate(x, y, 100.0F);
-        contextMatrices.scale(16.0F, -16.0F, 16.0F);
-        contextMatrices.scale(scaleFactor, scaleFactor, scaleFactor);
+        // Render the item in GUI context
+        itemRenderer.renderItem(item, ItemDisplayContext.GUI, LightmapTextureManager.MAX_LIGHT_COORDINATE, OverlayTexture.DEFAULT_UV, matrices, vertexConsumers, null,0);
 
-        renderState.render(contextMatrices, immediateVertexConsumer, LightmapTextureManager.MAX_LIGHT_COORDINATE, OverlayTexture.DEFAULT_UV);
-        immediateVertexConsumer.draw();
+        // Draw the vertex consumers buffer
+        vertexConsumers.draw();
 
-        contextMatrices.pop();
-        if (disableGuiDepthLighting) {
-            DiffuseLighting.enableGuiDepthLighting();
-        }
-
+        matrices.pop();
     }
 
     public static void renderItemAt(RenderVariables renderVariables) {

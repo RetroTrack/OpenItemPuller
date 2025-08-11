@@ -18,6 +18,7 @@ import net.minecraft.util.math.BlockPos;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
 public class NbtCoder {
@@ -32,7 +33,7 @@ public class NbtCoder {
         // Iterate through each chest block entity in the list
         for (BlockEntity blockEntity : blockEntityList) {
             // Get the inventory of the chest
-            Inventory inventory = HopperBlockEntity.getInventoryAt(player.getServerWorld(), blockEntity.getPos());
+            Inventory inventory = HopperBlockEntity.getInventoryAt(player.getWorld(), blockEntity.getPos());
 
             // Check if inventory exists, otherwise use check if block entity contains storage
             if (inventory != null) {
@@ -68,7 +69,7 @@ public class NbtCoder {
                 nbtCompound.put("chest_" + size, blockEntityNbt);
 
                 size++;
-            } else if (BlockEntitySearchUtil.isValidBlockEntity(blockEntity.getPos(), player.getServerWorld())) {
+            } else if (BlockEntitySearchUtil.isValidBlockEntity(blockEntity.getPos(), player.getWorld())) {
 
                 // Create a new NbtCompound to store data for this chest
                 NbtCompound blockEntityNbt = new NbtCompound();
@@ -78,7 +79,7 @@ public class NbtCoder {
                 ArrayList<Integer> itemCounts = new ArrayList<>();
 
                 // Get the storage from the block entity
-                Storage<ItemVariant> storage = BlockEntityUtil.getStorage(blockEntity.getPos(), player.getServerWorld(), player, false);
+                Storage<ItemVariant> storage = BlockEntityUtil.getStorage(blockEntity.getPos(), player.getWorld(), player, false);
                 if (storage == null) continue;
 
                 // Iterate through the storage
@@ -122,7 +123,7 @@ public class NbtCoder {
         if (blockEntity instanceof Nameable) {
             chestName = ((Nameable) blockEntity).getName().getString();
         } else {
-            chestName = "translatable: " + player.getServerWorld().getBlockState(blockEntity.getPos()).getBlock().getTranslationKey();
+            chestName = "translatable: " + player.getWorld().getBlockState(blockEntity.getPos()).getBlock().getTranslationKey();
         }
         return chestName;
     }
@@ -143,28 +144,37 @@ public class NbtCoder {
         return itemList;
     }
 
-    public static ArrayList<DecodedBlockEntity> decode(NbtCompound nbtCompound) {
+    public static ArrayList<DecodedBlockEntity>  decode(NbtCompound nbtCompound) {
         ArrayList<DecodedBlockEntity> decodedBlockEntities = new ArrayList<>();
         if (nbtCompound == null) return decodedBlockEntities;
 
         //Check chests
-        int chestListSize = nbtCompound.getInt("chest_list_size");
-        for (int chestIndex = 0; chestIndex < chestListSize; chestIndex++) {
+        Optional<Integer> chestListSize = nbtCompound.getInt("chest_list_size");
+        if (chestListSize.isEmpty()) {
+            return decodedBlockEntities; // Return empty list if no chests found
+        }
+        for (int chestIndex = 0; chestIndex < chestListSize.get(); chestIndex++) {
             // Nbt Compounds
-            NbtCompound chestNbt = nbtCompound.getCompound("chest_" + chestIndex);
-            NbtCompound itemList = chestNbt.getCompound("item_list");
+            Optional<NbtCompound> chestNbt = nbtCompound.getCompound("chest_" + chestIndex);
+            Optional<NbtCompound> itemList = chestNbt.flatMap(nbt -> nbt.getCompound("item_list"));
 
             // Chest info
-            String chestName = chestNbt.getString("chest_name");
-            BlockPos pos = new BlockPos(chestNbt.getIntArray("pos")[0], chestNbt.getIntArray("pos")[1], chestNbt.getIntArray("pos")[2]);
+            if (chestNbt.get().getString("chest_name").isEmpty()) continue; // Skip if chest or item list is not present
+            String chestName = chestNbt.get().getString("chest_name").get();
+            if(chestNbt.get().getIntArray("pos").isEmpty()) continue; // Skip if position is not present
+            BlockPos pos = new BlockPos(chestNbt.get().getIntArray("pos").get()[0], chestNbt.get().getIntArray("pos").get()[1], chestNbt.get().getIntArray("pos").get()[2]);
 
             // Items
-            int itemListSize = itemList.getInt("item_list_size");
+            if(itemList.get().getInt("item_list_size").isEmpty()) continue; // Skip if item list size is not present
+            int itemListSize = itemList.get().getInt("item_list_size").get();
 
             HashMap<Item, Integer> map = new HashMap<>();
             for (int itemIndex = 0; itemIndex < itemListSize; itemIndex++) {
-                Item item = Registries.ITEM.get(Identifier.of(itemList.getString("item_" + itemIndex)));
-                map.put(item, itemList.getInt("item_" + itemIndex + "_amount"));
+                if (itemList.get().getString("item_" + itemIndex).isPresent() || itemList.get().getInt("item_" + itemIndex + "_amount").isEmpty()) {
+                    continue; // Skip if item or amount is not present
+                }
+                Item item = Registries.ITEM.get(Identifier.of(itemList.get().getString("item_" + itemIndex).get()));
+                map.put(item, itemList.get().getInt("item_" + itemIndex + "_amount").get());
             }
 
             decodedBlockEntities.add(new DecodedBlockEntity(chestName, pos, map));

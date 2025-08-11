@@ -31,7 +31,7 @@ public record CheckChestPayload(int radius)  implements CustomPayload {
     public void receiveServer(ServerPlayNetworking.Context context) {
         int clampedRadius = MathHelper.clamp(radius, 1, ItemPuller.CONFIG.getInteger("radius"));
         List<BlockEntity> blockEntityList = BlockEntitySearchUtil.findSortedBlockEntitiesAroundPlayer(
-                context.player().getServerWorld(), context.player(), clampedRadius);
+                context.player().getWorld(), context.player(), clampedRadius);
 
         ServerPlayNetworking.send(context.player(), new OpenPullItemScreenPayload(
                 NbtCoder.encode(blockEntityList, context.player()), clampedRadius));
