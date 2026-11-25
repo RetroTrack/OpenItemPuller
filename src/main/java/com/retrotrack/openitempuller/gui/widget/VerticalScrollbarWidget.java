@@ -2,72 +2,60 @@ package com.retrotrack.openitempuller.gui.widget;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.screen.narration.NarrationPart;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 
 import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
 
 @Environment(EnvType.CLIENT)
-public class VerticalScrollbarWidget extends ClickableWidget {
+public class VerticalScrollbarWidget extends AbstractWidget {
 
-    private static final Identifier TEXTURE = Identifier.of(MOD_ID, "textures/gui/sprites/button/scrollbar/scrollbar.png");
+    private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/sprites/button/scrollbar/scrollbar.png");
 
-    private final int x;
-    private final int y;
-    private final int height;
     private final int scrollHeight;
     public double scrollPos;
     private final Callback callback;
 
-    public VerticalScrollbarWidget(int x, int y, int width, int height,int scrollHeight , Text message, Callback callback) {
+    public VerticalScrollbarWidget(int x, int y, int width, int height, int scrollHeight, Component message, Callback callback) {
         super(x, y, width, height, message);
-        this.x = x;
-        this.y = y;
-        this.height = height;
         this.scrollHeight = scrollHeight;
         this.scrollPos = 0;
         this.callback = callback;
     }
 
     @Override
-    protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.drawTexture(RenderLayer::getGuiTextured,TEXTURE, this.x, this.y + (int) ((float) scrollPos / scrollHeight * height),
-                0, 0, 7, 15, 7, 15);
-
-    }
-    @Override
-    protected void onDrag(double mouseX, double mouseY, double deltaX, double deltaY) {
-        float position = ((float) (mouseY * scrollHeight) / height) - this.y;
-        scrollPos = MathHelper.clamp(position, 0, scrollHeight -14);
-        this.callback.onValueChange(scrollPos, scrollHeight -14);
-        super.onDrag(mouseX,mouseY,deltaX,deltaY);
+    protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+        graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, this.getX(),
+                this.getY() + (int) ((float) scrollPos / scrollHeight * this.getHeight()),
+                0f, 0f, 7, 15, 7, 15);
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        scrollPos = MathHelper.clamp(scrollPos - (verticalAmount), 0, scrollHeight -14);
+    public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
+        float position = ((float) (event.y() * scrollHeight) / this.getHeight()) - this.getY();
+        scrollPos = Mth.clamp(position, 0, scrollHeight - 14);
         this.callback.onValueChange(scrollPos, scrollHeight - 14);
-        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+        return true;
+    }
+
+    /** Called by the screen so the wheel works anywhere on it. */
+    public void scrollBy(double verticalAmount) {
+        scrollPos = Mth.clamp(scrollPos - verticalAmount, 0, scrollHeight - 14);
+        this.callback.onValueChange(scrollPos, scrollHeight - 14);
     }
 
     @Override
-    protected void appendClickableNarrations(NarrationMessageBuilder builder) {
-        builder.put(NarrationPart.TITLE, "Item list scrollbar");
+    protected void updateWidgetNarration(NarrationElementOutput output) {
     }
-
 
     @Environment(EnvType.CLIENT)
     public interface Callback {
-        IPCheckboxWidget.Callback EMPTY = (checkbox, checked) -> {
-        };
-
         void onValueChange(double scrollbarPos, int scrollHeight);
     }
 }
-

@@ -5,29 +5,30 @@ import com.retrotrack.openitempuller.util.decoding.NbtCoder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
 
 import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
 
-public record OpenPullItemScreenPayload(NbtCompound encodedChests, int serverRadius) implements CustomPayload {
-    public static final CustomPayload.Id<OpenPullItemScreenPayload> ID = new CustomPayload.Id<>(Identifier.of(MOD_ID, "open_pull_screen"));
-    public static final PacketCodec<RegistryByteBuf, OpenPullItemScreenPayload> CODEC = PacketCodec.tuple(
-            PacketCodecs.NBT_COMPOUND, OpenPullItemScreenPayload::encodedChests,
-            PacketCodecs.INTEGER, OpenPullItemScreenPayload::serverRadius,
+public record OpenPullItemScreenPayload(CompoundTag encodedChests, int serverRadius) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<OpenPullItemScreenPayload> TYPE =
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(MOD_ID, "open_pull_screen"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, OpenPullItemScreenPayload> CODEC = StreamCodec.composite(
+            ByteBufCodecs.COMPOUND_TAG, OpenPullItemScreenPayload::encodedChests,
+            ByteBufCodecs.INT, OpenPullItemScreenPayload::serverRadius,
             OpenPullItemScreenPayload::new);
 
     @Override
-    public Id<? extends CustomPayload> getId() {
-        return ID;
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
     @Environment(EnvType.CLIENT)
     public void receiveClient(ClientPlayNetworking.Context context) {
-        context.client().setScreen(new PullItemScreen(context.client().currentScreen, NbtCoder.decode(encodedChests), serverRadius));
+        context.client().gui.setScreen(new PullItemScreen(context.client().gui.screen(), NbtCoder.decode(encodedChests), serverRadius));
     }
 }

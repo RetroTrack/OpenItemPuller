@@ -4,34 +4,34 @@ import com.retrotrack.openitempuller.ItemPuller;
 import com.retrotrack.openitempuller.util.BlockEntitySearchUtil;
 import com.retrotrack.openitempuller.util.decoding.NbtCoder;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 import java.util.List;
 
 import static com.retrotrack.openitempuller.ItemPuller.MOD_ID;
 
-public record CheckChestPayload(int radius)  implements CustomPayload {
-    public static final CustomPayload.Id<CheckChestPayload> ID = new CustomPayload.Id<>(Identifier.of(MOD_ID, "check_chests"));
-    public static final PacketCodec<RegistryByteBuf, CheckChestPayload> CODEC = PacketCodec.tuple(
-            PacketCodecs.INTEGER, CheckChestPayload::radius,
+public record CheckChestPayload(int radius) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<CheckChestPayload> TYPE =
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(MOD_ID, "check_chests"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, CheckChestPayload> CODEC = StreamCodec.composite(
+            ByteBufCodecs.INT, CheckChestPayload::radius,
             CheckChestPayload::new);
 
     @Override
-    public Id<? extends CustomPayload> getId() {
-        return ID;
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
-
     public void receiveServer(ServerPlayNetworking.Context context) {
-        int clampedRadius = MathHelper.clamp(radius, 1, ItemPuller.CONFIG.getInteger("radius"));
+        int clampedRadius = Mth.clamp(radius, 1, ItemPuller.CONFIG.getInteger("radius"));
         List<BlockEntity> blockEntityList = BlockEntitySearchUtil.findSortedBlockEntitiesAroundPlayer(
-                context.player().getServerWorld(), context.player(), clampedRadius);
+                context.player().level(), context.player(), clampedRadius);
 
         ServerPlayNetworking.send(context.player(), new OpenPullItemScreenPayload(
                 NbtCoder.encode(blockEntityList, context.player()), clampedRadius));

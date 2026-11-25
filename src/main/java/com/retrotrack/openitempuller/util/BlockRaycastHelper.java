@@ -1,40 +1,27 @@
 package com.retrotrack.openitempuller.util;
 
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.RaycastContext;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
 public class BlockRaycastHelper {
-    public static BlockPos getBlockPlayerIsLookingAt(ClientPlayerEntity player) {
-        // Define the range for the raycast
-        double reachDistance = 5.0; // Adjust as needed for the range
+    public static BlockPos getBlockPlayerIsLookingAt(LocalPlayer player) {
+        double reachDistance = 5.0;
 
-        // Start and end positions for the raycast
-        Vec3d start = player.getCameraPosVec(1.0F);
-        Vec3d direction = player.getRotationVec(1.0F);
-        Vec3d end = start.add(direction.multiply(reachDistance));
+        Vec3 start = player.getEyePosition(1.0F);
+        Vec3 direction = player.getViewVector(1.0F);
+        Vec3 end = start.add(direction.scale(reachDistance));
 
-        // Create a raycast context
-        RaycastContext context = new RaycastContext(
-                start,
-                end,
-                RaycastContext.ShapeType.OUTLINE,
-                RaycastContext.FluidHandling.NONE,
-                player
-        );
+        ClipContext context = new ClipContext(start, end,
+                ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player);
 
-        // Perform the raycast
-        BlockHitResult hitResult = player.getWorld().raycast(context);
-
-        // Check if the raycast hit a block
+        BlockHitResult hitResult = player.level().clip(context);
         if (hitResult.getType() == HitResult.Type.BLOCK) {
             return hitResult.getBlockPos();
         }
-
-        // Return null if no block was hit
         return null;
     }
 }

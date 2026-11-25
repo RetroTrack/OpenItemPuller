@@ -6,129 +6,129 @@ import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
-import net.minecraft.block.ChestBlock;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.ChestBlockEntity;
-import net.minecraft.block.entity.HopperBlockEntity;
-import net.minecraft.block.enums.ChestType;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.Registries;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.state.property.Properties;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.block.entity.HopperBlockEntity;
+import net.minecraft.world.level.block.state.properties.ChestType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.retrotrack.openitempuller.ItemPuller.CONFIG;
 
 public class BlockEntityUtil {
 
-    public static BlockPos getConnectedChestPos(ServerPlayerEntity player, BlockPos chestPos) {
-        World world = player.getServerWorld();
-        if(!(world.getBlockEntity(chestPos) instanceof ChestBlockEntity)) return null;
-        if (!(world.getBlockState(chestPos).getBlock() instanceof ChestBlock)) return null; // Return null if the block is not a chest
+    public static BlockPos getConnectedChestPos(ServerPlayer player, BlockPos chestPos) {
+        Level world = player.level();
+        if (!(world.getBlockEntity(chestPos) instanceof ChestBlockEntity)) return null;
+        if (!(world.getBlockState(chestPos).getBlock() instanceof ChestBlock)) return null;
 
-        ChestType chestType = world.getBlockState(chestPos).get(ChestBlock.CHEST_TYPE);
-        if (chestType.equals(ChestType.SINGLE)) return null; // Return null if the chest is single
+        ChestType chestType = world.getBlockState(chestPos).getValue(ChestBlock.TYPE);
+        if (chestType.equals(ChestType.SINGLE)) return null;
 
-        Direction facing = world.getBlockState(chestPos).get(Properties.HORIZONTAL_FACING);
+        Direction facing = world.getBlockState(chestPos).getValue(ChestBlock.FACING);
         BlockPos connectedChestPos;
         switch (facing) {
-            case NORTH -> connectedChestPos = chestType.equals(ChestType.LEFT) ? chestPos.offset(Direction.EAST) : chestPos.offset(Direction.WEST);
-            case EAST -> connectedChestPos = chestType.equals(ChestType.LEFT) ? chestPos.offset(Direction.SOUTH) : chestPos.offset(Direction.NORTH);
-            case SOUTH -> connectedChestPos = chestType.equals(ChestType.LEFT) ? chestPos.offset(Direction.WEST) : chestPos.offset(Direction.EAST);
-            case WEST -> connectedChestPos = chestType.equals(ChestType.LEFT) ? chestPos.offset(Direction.NORTH) : chestPos.offset(Direction.SOUTH);
+            case NORTH -> connectedChestPos = chestType.equals(ChestType.LEFT) ? chestPos.relative(Direction.EAST) : chestPos.relative(Direction.WEST);
+            case EAST -> connectedChestPos = chestType.equals(ChestType.LEFT) ? chestPos.relative(Direction.SOUTH) : chestPos.relative(Direction.NORTH);
+            case SOUTH -> connectedChestPos = chestType.equals(ChestType.LEFT) ? chestPos.relative(Direction.WEST) : chestPos.relative(Direction.EAST);
+            case WEST -> connectedChestPos = chestType.equals(ChestType.LEFT) ? chestPos.relative(Direction.NORTH) : chestPos.relative(Direction.SOUTH);
             default -> {
-                return null; // Facing direction is unknown
+                return null;
             }
         }
 
         if (world.getBlockState(connectedChestPos).getBlock() instanceof ChestBlock) return connectedChestPos;
-        return null; // Return null if no connected chest found
+        return null;
     }
-
 
     public static ArrayList<DecodedBlockEntity> getChestsWithItem(Item item, ArrayList<DecodedBlockEntity> decodedBlockEntities) {
-        ArrayList<DecodedBlockEntity> collect = decodedBlockEntities.stream().filter(chest -> chest.items().containsKey(item)).collect(Collectors.toCollection(ArrayList::new));
-        ArrayList<DecodedBlockEntity> collect2;
-        if(CONFIG.getInteger("priority_type") == 1) collect2 = BlockEntitySearchUtil.sortByItemCount(collect, item);
-        else collect2 = collect;
-        return collect2;
+        ArrayList<DecodedBlockEntity> collect = decodedBlockEntities.stream()
+                .filter(chest -> chest.items().containsKey(item))
+                .collect(Collectors.toCollection(ArrayList::new));
+        if (CONFIG.getInteger("priority_type") == 1) return BlockEntitySearchUtil.sortByItemCount(collect, item);
+        return collect;
     }
 
-    public static int retrieveItemsBlockEntity(ServerPlayerEntity player, NbtCompound compound) {
-        int size = compound.getInt("size");
+    public static int retrieveItemsBlockEntity(ServerPlayer player, CompoundTag compound) {
+        int size = compound.getIntOr("size", 0);
         int totalItemsTransferred = 0;
 
-        boolean fromBlock = compound.getBoolean("from_block");
+        boolean fromBlock = compound.getBooleanOr("from_block", false);
         BlockPos targetPos = null;
-        if(fromBlock) targetPos = new BlockPos(compound.getIntArray("target_pos")[0], compound.getIntArray("target_pos")[1], compound.getIntArray("target_pos")[2]);
+        if (fromBlock) {
+            int[] t = compound.getIntArray("target_pos").orElse(null);
+            if (t == null || t.length < 3) fromBlock = false;
+            else targetPos = new BlockPos(t[0], t[1], t[2]);
+        }
 
         for (int i = 0; i < size; i++) {
-            NbtCompound child = compound.getCompound("chest_id_" + i);
-            if (child == null) continue;
-            BlockPos sourcePos = new BlockPos(child.getIntArray("source_pos")[0], child.getIntArray("source_pos")[1], child.getIntArray("source_pos")[2]);
+            Optional<CompoundTag> childOpt = compound.getCompound("chest_id_" + i);
+            if (childOpt.isEmpty()) continue;
+            CompoundTag child = childOpt.get();
+            int[] s = child.getIntArray("source_pos").orElse(null);
+            if (s == null || s.length < 3) continue;
+            BlockPos sourcePos = new BlockPos(s[0], s[1], s[2]);
 
-            BlockEntity blockEntity = BlockEntitySearchUtil.isUnlocked(player.getServerWorld(), sourcePos);
+            BlockEntity blockEntity = BlockEntitySearchUtil.isUnlocked(player, sourcePos);
             if (blockEntity == null) continue;
 
-            totalItemsTransferred += transfer(player, child.getString("item"), child.getInt("item_count"), sourcePos, targetPos, fromBlock);
+            totalItemsTransferred += transfer(player, child.getStringOr("item", "minecraft:air"),
+                    child.getIntOr("item_count", 0), sourcePos, targetPos, fromBlock);
         }
         return totalItemsTransferred;
     }
 
-    public static int transfer(ServerPlayerEntity player, String idString, int count, BlockPos sourcePos, BlockPos targetPos, boolean fromBlock) {
-        // Get item from identifier gathered from nbt compound
-        String[] split = idString.split(":");
-        Identifier id = Identifier.of(split[0], split[1]);
-        Item item = Registries.ITEM.get(id);
+    public static int transfer(ServerPlayer player, String idString, int count, BlockPos sourcePos, BlockPos targetPos, boolean fromBlock) {
+        Identifier id = Identifier.parse(idString);
+        Item item = BuiltInRegistries.ITEM.getValue(id);
         int itemsTransferred = 0;
+        Level level = player.level();
 
-        // Get inventories required for transferring items
-        Inventory sourceInventory = HopperBlockEntity.getInventoryAt(player.getServerWorld(), sourcePos);
-        Inventory targetInventory = null;
+        Container sourceInventory = HopperBlockEntity.getContainerAt(level, sourcePos);
+        Container targetInventory = null;
 
         if (fromBlock) {
-            targetInventory = HopperBlockEntity.getInventoryAt(player.getServerWorld(), targetPos);
+            targetInventory = HopperBlockEntity.getContainerAt(level, targetPos);
 
-            // If no valid inventory is found, check for storage
             if (targetInventory == null) {
-                Storage<ItemVariant> targetStorage = getStorage(targetPos, player.getServerWorld(), null, false);
-
+                Storage<ItemVariant> targetStorage = getStorage(targetPos, level, null, false);
                 if (targetStorage != null) {
-                    Storage<ItemVariant> sourceStorage = getStorage(sourcePos, player.getServerWorld(), null, false);
-
+                    Storage<ItemVariant> sourceStorage = getStorage(sourcePos, level, null, false);
                     if (sourceStorage != null) {
                         itemsTransferred += transferFromStorage(sourceStorage, targetStorage, item, count);
-                        return itemsTransferred; // Exit early since the transfer is handled by storage
+                        return itemsTransferred;
                     }
                 }
             }
         }
 
-        // Fallback to player inventory if necessary
         if (!fromBlock || targetInventory == null) {
             targetInventory = player.getInventory();
         }
 
-        // Check block if contains inventory or else check if it has a storage
         if (sourceInventory == null) {
-            Storage<ItemVariant> sourceStorage = getStorage(sourcePos, player.getServerWorld(), null, false);
+            Storage<ItemVariant> sourceStorage = getStorage(sourcePos, level, null, false);
             Storage<ItemVariant> targetStorage = null;
 
             if (fromBlock) {
-                targetStorage = getStorage(targetPos, player.getServerWorld(), null, false);
+                targetStorage = getStorage(targetPos, level, null, false);
             }
             if (targetStorage == null) {
                 targetStorage = getStorage(null, null, player, true);
@@ -138,8 +138,8 @@ public class BlockEntityUtil {
         }
 
         if (sourceInventory != null || targetInventory != null) {
-            if (fromBlock && targetInventory instanceof PlayerInventory) {
-                player.sendMessage(Text.translatable("openitempuller.message.pull_to_target.error").formatted(Formatting.RED), true);
+            if (fromBlock && targetInventory instanceof Inventory) {
+                player.sendSystemMessage(Component.translatable("openitempuller.message.pull_to_target.error").withStyle(ChatFormatting.RED), true);
             }
             itemsTransferred += transferFromInventory(sourceInventory, targetInventory, item, count);
         }
@@ -148,7 +148,7 @@ public class BlockEntityUtil {
     }
 
     @Nullable
-    public static Storage<ItemVariant> getStorage(@Nullable BlockPos pos, @Nullable World world, @Nullable ServerPlayerEntity player, boolean fallback) {
+    public static Storage<ItemVariant> getStorage(@Nullable BlockPos pos, @Nullable Level world, @Nullable ServerPlayer player, boolean fallback) {
         Storage<ItemVariant> storage = null;
 
         if (pos != null && world != null) {
@@ -157,89 +157,78 @@ public class BlockEntityUtil {
 
         if (storage == null && player != null && fallback) {
             storage = PlayerInventoryStorage.of(player);
-            player.sendMessage(Text.translatable("openitempuller.message.pull_to_target.error").formatted(Formatting.RED), true);
+            player.sendSystemMessage(Component.translatable("openitempuller.message.pull_to_target.error").withStyle(ChatFormatting.RED), true);
         }
 
         return storage;
     }
 
-
-    public static int transferFromInventory(Inventory source, Inventory target, Item item, int maxAmount) {
+    public static int transferFromInventory(Container source, Container target, Item item, int maxAmount) {
         if (source == null || target == null) return 0;
         int itemsTransferred = 0;
 
-        // Iterate through the source inventory
-        for (int j = 0; j < source.size(); j++) {
-            ItemStack sourceStack = source.getStack(j);
+        for (int j = 0; j < source.getContainerSize(); j++) {
+            ItemStack sourceStack = source.getItem(j);
             if (!sourceStack.getItem().equals(item)) continue;
 
-            // Calculate the transfer amount
             int transferAmount = Math.min(maxAmount - itemsTransferred, sourceStack.getCount());
-            if (transferAmount <= 0) continue; // No more items to transfer
+            if (transferAmount <= 0) continue;
 
-            // Split the stack to the amount needed for the transfer
             ItemStack splitStack = sourceStack.split(transferAmount);
 
-            //Check if inventory type is a player inventory, then offer or drop or continue
-            if(target instanceof PlayerInventory) {
-                ((PlayerInventory) target).offerOrDrop(splitStack);
+            if (target instanceof Inventory playerInventory) {
+                // add() moves what fits; whatever does not fit goes back into the chest
+                playerInventory.add(splitStack);
+                int leftover = splitStack.getCount();
+                if (leftover > 0) {
+                    sourceStack.grow(leftover);
+                    itemsTransferred += transferAmount - leftover;
+                    break; // inventory is full
+                }
                 itemsTransferred += transferAmount;
                 continue;
             }
 
-            // Attempt to add the split stack to the target inventory
-            for (int k = 0; k < target.size(); k++) {
-                ItemStack existingStack = target.getStack(k);
+            for (int k = 0; k < target.getContainerSize(); k++) {
+                ItemStack existingStack = target.getItem(k);
 
-                // Check if the slot can accept the item
-                if (!target.canTransferTo(target, k, splitStack)) continue;
+                if (!target.canTakeItem(target, k, splitStack)) continue;
 
                 if (existingStack.isEmpty()) {
-                    // If the slot is empty, place the stack here
-                    target.setStack(k, splitStack);
+                    target.setItem(k, splitStack);
                     itemsTransferred += splitStack.getCount();
-                    splitStack = ItemStack.EMPTY; // The stack is fully transferred
+                    splitStack = ItemStack.EMPTY;
                     break;
                 } else if (canStackAddMore(existingStack, splitStack, target)) {
-                    // If the slot contains the same item, try to merge
-                    int availableSpace = existingStack.getMaxCount() - existingStack.getCount();
+                    int availableSpace = existingStack.getMaxStackSize() - existingStack.getCount();
                     int mergeAmount = Math.min(splitStack.getCount(), availableSpace);
-                    existingStack.increment(mergeAmount);
-                    splitStack.decrement(mergeAmount);
+                    existingStack.grow(mergeAmount);
+                    splitStack.shrink(mergeAmount);
                     itemsTransferred += mergeAmount;
 
                     if (splitStack.isEmpty()) {
-                        break; // The stack is fully transferred
+                        break;
                     }
                 }
             }
 
-            // If items remain in the split stack, return them to the source slot
             if (!splitStack.isEmpty()) {
-                sourceStack.increment(splitStack.getCount()); // Return items to the original stack
-                break; // Exit the loop as no more items can be transferred
+                sourceStack.grow(splitStack.getCount());
+                break;
             }
 
-            // If all items are transferred, exit the loop
             if (itemsTransferred >= maxAmount) break;
         }
         return itemsTransferred;
     }
 
-    private static boolean canStackAddMore(ItemStack existingStack, ItemStack stack, Inventory inventory) {
-        return !existingStack.isEmpty() && ItemStack.areItemsAndComponentsEqual(existingStack, stack) && existingStack.isStackable() && existingStack.getCount() < inventory.getMaxCount(existingStack);
+    private static boolean canStackAddMore(ItemStack existingStack, ItemStack stack, Container container) {
+        return !existingStack.isEmpty() && ItemStack.isSameItemSameComponents(existingStack, stack)
+                && existingStack.isStackable() && existingStack.getCount() < container.getMaxStackSize(existingStack);
     }
-
 
     public static int transferFromStorage(Storage<ItemVariant> source, Storage<ItemVariant> target, Item item, int maxAmount) {
         if (source == null || target == null) return 0;
-        return (int) StorageUtil.move(
-                source,
-                target,
-                iv -> iv.getItem().equals(item),
-                maxAmount,
-                null
-        );
-
+        return (int) StorageUtil.move(source, target, iv -> iv.getItem().equals(item), maxAmount, null);
     }
 }
