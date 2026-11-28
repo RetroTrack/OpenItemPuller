@@ -67,6 +67,12 @@ public class SettingsScreen extends Screen {
         return Identifier.fromNamespaceAndPath(MOD_ID, path);
     }
 
+    /** A tool screen like a container screen: the world keeps running (and is not saved) while it is open. */
+    @Override
+    public boolean isPauseScreen() {
+        return false;
+    }
+
     @Override
     public void onClose() {
         if (this.minecraft == null) return;

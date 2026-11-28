@@ -11,6 +11,8 @@
 - Named chest compatible
 - Tells items apart by their components: enchanted, renamed or filled stacks (e.g. shulker boxes) are separate entries and are never mixed with plain ones
 - Scrollable chest list (mouse wheel over the chest list)
+- Quick amount buttons (1 / Stack / All / clear) that fill the amounts over your chests, top of the list first
+- Shows beforehand how much of your selection fits in your inventory (not for a target storage)
 - S+ like UI
 - Server-configurable maximum pull range
 

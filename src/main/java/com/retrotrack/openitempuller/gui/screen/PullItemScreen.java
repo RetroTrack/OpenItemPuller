@@ -8,6 +8,8 @@ import com.retrotrack.openitempuller.gui.widget.hover.TextHoverWidget;
 import com.retrotrack.openitempuller.networking.ClientNetworkUtil;
 import com.retrotrack.openitempuller.networking.payloads.PullItemsPayload;
 import com.retrotrack.openitempuller.util.BlockEntityUtil;
+import com.retrotrack.openitempuller.util.InventoryRoom;
+import com.retrotrack.openitempuller.util.QuickAmount;
 import com.retrotrack.openitempuller.util.RenderUtil;
 import com.retrotrack.openitempuller.util.decoding.DecodedBlockEntity;
 import net.fabricmc.api.EnvType;
@@ -31,7 +33,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import org.apache.commons.lang3.StringUtils;
@@ -70,6 +74,8 @@ public class PullItemScreen extends Screen {
     private final ArrayList<ImageButton> itemSelectButtons = new ArrayList<>();
     private final ArrayList<EditBox> textFieldWidgets = new ArrayList<>();
     private final ArrayList<Checkbox> checkBoxWidgets = new ArrayList<>();
+    /** The quick amount buttons under the item list; only usable while an item is selected. */
+    private final ArrayList<Button> quickButtons = new ArrayList<>();
     private final ArrayList<TextHoverWidget> chestsDisplayHovers = new ArrayList<>();
     private EditBox searchBar;
     private VerticalScrollbarWidget scrollbarWidget;
@@ -95,6 +101,16 @@ public class PullItemScreen extends Screen {
     private final LinkedHashMap<ItemVariant, PullItemsPayload.Entry> pullSelections = new LinkedHashMap<>();
     /** Storage to pull into, or null to pull into the player inventory. */
     private final BlockPos targetBlock;
+    private final HashMap<BlockPos, DecodedBlockEntity> chestsByPos = new HashMap<>();
+
+    /** Main inventory slots (hotbar included): the part of the inventory a pull can fill. */
+    private static final int MAIN_INVENTORY_SLOTS = 36;
+    private static final long ROOM_REFRESH_NANOS = 500_000_000L;
+    /** "Room: fits / wanted" under the quick buttons; null when there is nothing to tell. Recomputed when dirty or stale. */
+    private Component roomText;
+    private int roomColor;
+    private boolean roomDirty = true;
+    private long roomComputedAt;
 
     public PullItemScreen(Screen parent, ArrayList<DecodedBlockEntity> decodedBlockEntities, int serverMaxRadius) {
         super(Component.literal(" "));
@@ -102,6 +118,7 @@ public class PullItemScreen extends Screen {
         this.decodedBlockEntities = decodedBlockEntities;
         this.serverMaxRadius = serverMaxRadius;
         this.targetBlock = ItemPullerClient.usableTarget(Minecraft.getInstance(), serverMaxRadius);
+        decodedBlockEntities.forEach(be -> chestsByPos.put(be.pos(), be));
     }
 
     private static Identifier sprite(String path) {
@@ -126,6 +143,12 @@ public class PullItemScreen extends Screen {
         }
         variantTooltips.put(variant, joined);
         return joined;
+    }
+
+    /** A tool screen like a container screen: the world keeps running (and is not saved) while it is open. */
+    @Override
+    public boolean isPauseScreen() {
+        return false;
     }
 
     @Override
@@ -182,6 +205,7 @@ public class PullItemScreen extends Screen {
         this.addButtons();
         this.addChildren();
         this.setFocused(searchBar);
+        roomDirty = true;
     }
 
     @Override
@@ -206,6 +230,9 @@ public class PullItemScreen extends Screen {
         if (chestRangeText != null) {
             graphics.text(this.font, chestRangeText, this.i + 105, this.height / 2 + 89, 0xFFFFFFFF, true);
         }
+        // The inventory also changes while this screen is open (the world keeps running), so refresh now and then
+        if (roomDirty || System.nanoTime() - roomComputedAt > ROOM_REFRESH_NANOS) refreshRoom();
+        if (roomText != null) graphics.text(this.font, roomText, this.i + 2, this.height / 2 + 104, roomColor, true);
     }
 
     @Override
@@ -271,9 +298,98 @@ public class PullItemScreen extends Screen {
         chestsDisplayHovers.forEach(this::addRenderableWidget);
         textFieldWidgets.forEach(this::addRenderableWidget);
         checkBoxWidgets.forEach(this::addRenderableWidget);
+        addQuickButtons();
         this.addRenderableWidget(Button.builder(Component.translatable("openitempuller.pull_screen.pull_button"), button -> pullItems())
                 .bounds(this.i + 174, this.height / 2 + 83, 80, 20)
                 .build());
+    }
+
+
+    /**
+     * Works out how much of everything that is filled in would fit in the player's inventory, so the player sees
+     * it before pulling instead of "no room" afterwards. Counts what the chests really hold (a typed 9999 from a
+     * chest with 50 is 50). Not shown for a target storage: its free space is not known on the client.
+     */
+    private void refreshRoom() {
+        roomDirty = false;
+        roomComputedAt = System.nanoTime();
+        roomText = null;
+        if (targetBlock != null || this.minecraft == null || this.minecraft.player == null) return;
+        saveChestSelection();
+
+        Inventory inventory = this.minecraft.player.getInventory();
+        List<InventoryRoom.Slot<ItemVariant>> slots = new ArrayList<>();
+        for (int slot = 0; slot < Math.min(MAIN_INVENTORY_SLOTS, inventory.getContainerSize()); slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            slots.add(stack.isEmpty() ? new InventoryRoom.Slot<>(null, 0) : new InventoryRoom.Slot<>(ItemVariant.of(stack), stack.getCount()));
+        }
+        HashMap<ItemVariant, Integer> stackSizes = new HashMap<>();
+        InventoryRoom<ItemVariant> room = new InventoryRoom<>(slots,
+                variant -> stackSizes.computeIfAbsent(variant, v -> v.toStack().getMaxStackSize()));
+
+        long wanted = 0;
+        long fits = 0;
+        for (PullItemsPayload.Entry entry : pullSelections.values()) {
+            long count = 0;
+            for (PullItemsPayload.Source source : entry.sources()) {
+                DecodedBlockEntity chest = chestsByPos.get(source.pos());
+                if (chest != null) count += Math.min(source.count(), chest.items().getOrDefault(entry.variant(), 0));
+            }
+            if (count <= 0) continue;
+            wanted += count;
+            fits += room.insert(entry.variant(), count);
+        }
+        if (wanted <= 0) return;
+        roomText = Component.translatable("openitempuller.pull_screen.room", fits, wanted);
+        roomColor = fits >= wanted ? 0xFF55FF55 : 0xFFFF5555;
+    }
+
+    /**
+     * "1", "Stack", "All" and "clear" under the item list. They set the amount for the selected item as a total over
+     * all its chests, filled in the order the chest list shows them (top first).
+     */
+    private void addQuickButtons() {
+        quickButtons.clear();
+        int y = this.height / 2 + 85;
+        int x = this.i + 2;
+        x = addQuickButton(x, y, 18, "one", () -> 1L);
+        x = addQuickButton(x, y, 34, "stack", () -> (long) selectedItem.toStack().getMaxStackSize());
+        x = addQuickButton(x, y, 24, "all", () -> Long.MAX_VALUE);
+        addQuickButton(x, y, 18, "clear", () -> 0L);
+    }
+
+    private int addQuickButton(int x, int y, int width, String key, java.util.function.LongSupplier wanted) {
+        Button button = Button.builder(Component.translatable("openitempuller.pull_screen.quick." + key),
+                        b -> applyQuickAmount(wanted.getAsLong()))
+                .bounds(x, y, width, 16)
+                .tooltip(Tooltip.create(Component.translatable("openitempuller.pull_screen.quick." + key + ".tooltip")))
+                .build();
+        button.active = selectedItem != null;
+        quickButtons.add(button);
+        this.addRenderableWidget(button);
+        return x + width + 2;
+    }
+
+    /** Sets the pull amount of the selected item to {@code wanted} in total, spread over its chests in list order. */
+    private void applyQuickAmount(long wanted) {
+        if (selectedItem == null) return;
+        List<Integer> available = blockEntitiesWithItem.stream()
+                .map(be -> be.items().getOrDefault(selectedItem, 0))
+                .toList();
+        int[] amounts = QuickAmount.distribute(available, wanted);
+
+        // Store the result for every chest, also the ones scrolled out of view ...
+        List<PullItemsPayload.Source> sources = new ArrayList<>();
+        for (int k = 0; k < amounts.length && sources.size() < PullItemsPayload.MAX_SOURCES; k++) {
+            if (amounts[k] > 0) sources.add(new PullItemsPayload.Source(blockEntitiesWithItem.get(k).pos(), amounts[k]));
+        }
+        pullSelections.put(selectedItem, new PullItemsPayload.Entry(selectedItem, sources));
+        // ... and make the rows on screen agree, because rebuilding saves them first
+        for (int k = 0; k < textFieldWidgets.size(); k++) {
+            int amount = amounts[shownChestOffset + k];
+            textFieldWidgets.get(k).setValue(amount > 0 ? String.valueOf(amount) : "");
+        }
+        initButtons(-1, true, false);
     }
 
     private void moveItemSelectButtons(double pos, int scrollHeight) {
@@ -397,6 +513,7 @@ public class PullItemScreen extends Screen {
             }
 
             fieldWidget.setValue(String.valueOf(itemCount));
+            fieldWidget.setResponder(text -> roomDirty = true);   // after setValue, so building the row does not fire it
             textFieldWidgets.add(fieldWidget);
             int finalRow = row;
             checkBoxWidgets.add(Checkbox.builder(Component.literal(""), this.font)
