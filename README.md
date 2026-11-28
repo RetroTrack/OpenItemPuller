@@ -38,6 +38,11 @@ Returning `false` hides the container from the list and rejects pulls from or in
 - Fabric-api
 - Mod needs to be installed both server & client side to work!
 
+## Development
+- `./gradlew build` builds the mod and runs the unit tests (`src/test`).
+- Pushes and pull requests are built by GitHub Actions (`.github/workflows/build.yml`).
+- Releasing: set `mod_version` in `gradle.properties`, then push a tag with the same name, e.g. `git tag v0.2.0-beta.1 && git push origin v0.2.0-beta.1`. `release.yml` builds, tests and attaches the jar to a GitHub release (a version with a `-` such as `-beta.1` becomes a pre-release). Uploading to Modrinth is done by hand.
+
 ## 
 This mod is made by a student, so updates may differ based on workload
 
