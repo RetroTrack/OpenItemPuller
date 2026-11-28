@@ -25,16 +25,19 @@ public final class RateLimiter {
     private final int ticksPerToken;
     private final Map<UUID, Bucket> buckets = new ConcurrentHashMap<>();
 
-    private RateLimiter(int capacity, int ticksPerToken) {
+    /** Package-private so tests can make their own limiter; the shared ones are {@link #CHECK} and {@link #PULL}. */
+    RateLimiter(int capacity, int ticksPerToken) {
         this.capacity = capacity;
         this.ticksPerToken = ticksPerToken;
     }
 
     /** @return true if the request may proceed; false if the player is over the limit. */
     public boolean tryAcquire(ServerPlayer player) {
-        long now = player.level().getGameTime();
-        UUID id = player.getUUID();
+        return tryAcquire(player.getUUID(), player.level().getGameTime());
+    }
 
+    /** Same as {@link #tryAcquire(ServerPlayer)}, with the player's id and the current game tick given directly. */
+    boolean tryAcquire(UUID id, long now) {
         double tokens = capacity;
         Bucket previous = buckets.get(id);
         if (previous != null) {

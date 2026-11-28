@@ -23,6 +23,13 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v5
 
+      - name: Check Gradle wrapper jar
+        run: |
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+            echo "::error::gradle/wrapper/gradle-wrapper.jar is not in the repository. Run './gradlew wrapper' locally, then 'git add -f gradle/wrapper/gradle-wrapper.jar' and commit it."
+            exit 1
+          fi
+
       # The wrapper script lost its executable bit in git (committed from Windows)
       - name: Make gradlew executable
         run: chmod +x gradlew

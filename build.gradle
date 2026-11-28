@@ -20,13 +20,19 @@ dependencies {
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    // Unit tests for the logic that does not need Minecraft (src/test)
+    // Unit tests (src/test)
     testImplementation "org.junit.jupiter:junit-jupiter:5.11.4"
+    // Lets tests use Minecraft and Fabric API classes (items, storages) next to the loader
+    testImplementation "net.fabricmc:fabric-loader-junit:${project.loader_version}"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.11.4"
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+    testLogging {
+        events 'failed'
+        exceptionFormat 'full'   // the whole cause chain, not just the first line
+    }
 }
 
 processResources {
