@@ -38,7 +38,8 @@ public class VerticalScrollbarWidget extends AbstractWidget {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
-        float position = ((float) (event.y() * scrollHeight) / this.getHeight()) - this.getY();
+        // Mouse offset inside the track, scaled to scroll units (the thumb is drawn at getY() + scrollPos / scrollHeight * height)
+        double position = (event.y() - this.getY()) * scrollHeight / this.getHeight();
         scrollPos = Mth.clamp(position, 0, scrollHeight - 14);
         this.callback.onValueChange(scrollPos, scrollHeight - 14);
         return true;

@@ -1,36 +1,34 @@
 package com.retrotrack.openitempuller.util;
 
+import com.retrotrack.openitempuller.config.ClientConfig;
+import com.retrotrack.openitempuller.networking.payloads.PullItemsPayload;
 import com.retrotrack.openitempuller.util.decoding.DecodedBlockEntity;
+import net.fabricmc.fabric.api.transfer.v1.item.ContainerStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
-import net.minecraft.ChatFormatting;
+import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.ChestBlock;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.block.state.properties.ChestType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Optional;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.retrotrack.openitempuller.ItemPuller.CONFIG;
+import static com.retrotrack.openitempuller.ItemPuller.serverConfig;
 
 public class BlockEntityUtil {
 
@@ -54,181 +52,163 @@ public class BlockEntityUtil {
             }
         }
 
+        // The other half can sit in the neighbouring chunk: never load it just to look.
+        if (!world.hasChunkAt(connectedChestPos)) return null;
         if (world.getBlockState(connectedChestPos).getBlock() instanceof ChestBlock) return connectedChestPos;
         return null;
     }
 
-    public static ArrayList<DecodedBlockEntity> getChestsWithItem(Item item, ArrayList<DecodedBlockEntity> decodedBlockEntities) {
+    public static ArrayList<DecodedBlockEntity> getChestsWithItem(ItemVariant variant, ArrayList<DecodedBlockEntity> decodedBlockEntities,
+                                                                  ClientConfig.PriorityType priority) {
         ArrayList<DecodedBlockEntity> collect = decodedBlockEntities.stream()
-                .filter(chest -> chest.items().containsKey(item))
+                .filter(chest -> chest.items().containsKey(variant))
                 .collect(Collectors.toCollection(ArrayList::new));
-        if (CONFIG.getInteger("priority_type") == 1) return BlockEntitySearchUtil.sortByItemCount(collect, item);
+        if (priority == ClientConfig.PriorityType.ITEM_COUNT) return BlockEntitySearchUtil.sortByItemCount(collect, variant);
         return collect;
     }
 
-    public static int retrieveItemsBlockEntity(ServerPlayer player, CompoundTag compound) {
-        int size = compound.getIntOr("size", 0);
-        int totalItemsTransferred = 0;
-
-        boolean fromBlock = compound.getBooleanOr("from_block", false);
-        BlockPos targetPos = null;
-        if (fromBlock) {
-            int[] t = compound.getIntArray("target_pos").orElse(null);
-            if (t == null || t.length < 3) fromBlock = false;
-            else targetPos = new BlockPos(t[0], t[1], t[2]);
-        }
-
-        for (int i = 0; i < size; i++) {
-            Optional<CompoundTag> childOpt = compound.getCompound("chest_id_" + i);
-            if (childOpt.isEmpty()) continue;
-            CompoundTag child = childOpt.get();
-            int[] s = child.getIntArray("source_pos").orElse(null);
-            if (s == null || s.length < 3) continue;
-            BlockPos sourcePos = new BlockPos(s[0], s[1], s[2]);
-
-            BlockEntity blockEntity = BlockEntitySearchUtil.isUnlocked(player, sourcePos);
-            if (blockEntity == null) continue;
-
-            totalItemsTransferred += transfer(player, child.getStringOr("item", "minecraft:air"),
-                    child.getIntOr("item_count", 0), sourcePos, targetPos, fromBlock);
-        }
-        return totalItemsTransferred;
+    /**
+     * @param moved          how many items were moved in total
+     * @param targetRejected the requested target block failed validation; nothing was attempted
+     * @param targetFallback a target was requested but could not be used, so the items went to the player
+     */
+    public record PullResult(long moved, boolean targetRejected, boolean targetFallback) {
+        static final PullResult REJECTED = new PullResult(0, true, false);
     }
 
-    public static int transfer(ServerPlayer player, String idString, int count, BlockPos sourcePos, BlockPos targetPos, boolean fromBlock) {
-        Identifier id = Identifier.parse(idString);
-        Item item = BuiltInRegistries.ITEM.getValue(id);
-        int itemsTransferred = 0;
+    /**
+     * Handles one pull request: every entry (item variant) with its sources, into one target.
+     * Messaging the player is left to the caller, so a click ends in exactly one message.
+     */
+    public static PullResult retrieveItemsBlockEntity(ServerPlayer player, PullItemsPayload payload) {
+        // Validated against the server limit, never against what the client asked for.
+        int radius = serverConfig().maxRadius();
         Level level = player.level();
 
-        Container sourceInventory = HopperBlockEntity.getContainerAt(level, sourcePos);
-        Container targetInventory = null;
-
+        boolean fromBlock = payload.target().isPresent();
+        BlockPos targetPos = payload.target().orElse(null);
         if (fromBlock) {
-            targetInventory = HopperBlockEntity.getContainerAt(level, targetPos);
-
-            if (targetInventory == null) {
-                Storage<ItemVariant> targetStorage = getStorage(targetPos, level, null, false);
-                if (targetStorage != null) {
-                    Storage<ItemVariant> sourceStorage = getStorage(sourcePos, level, null, false);
-                    if (sourceStorage != null) {
-                        itemsTransferred += transferFromStorage(sourceStorage, targetStorage, item, count);
-                        return itemsTransferred;
-                    }
-                }
-            }
+            // The target is client-supplied too: same radius / type / lock / permission rules as a source.
+            // Rejected outright (not silently redirected) so a forged target can't be probed.
+            if (!PullValidator.canAccess(player, targetPos, radius)) return PullResult.REJECTED;
         }
 
-        if (!fromBlock || targetInventory == null) {
-            targetInventory = player.getInventory();
-        }
+        // The other half of a double chest is the same inventory as the half at targetPos
+        BlockPos targetPartner = fromBlock ? getConnectedChestPos(player, targetPos) : null;
 
-        if (sourceInventory == null) {
-            Storage<ItemVariant> sourceStorage = getStorage(sourcePos, level, null, false);
-            Storage<ItemVariant> targetStorage = null;
+        // Resolved once for the whole request, not per source
+        Storage<ItemVariant> target = fromBlock ? storageAt(level, targetPos, null) : null;
+        Container targetContainer = fromBlock ? HopperBlockEntity.getContainerAt(level, targetPos) : null;
+        boolean fellBack = fromBlock && target == null;
+        if (target == null) target = PlayerInventoryStorage.of(player);
 
-            if (fromBlock) {
-                targetStorage = getStorage(targetPos, level, null, false);
+        long total = 0;
+        // both list lengths are already capped by the codec (PullItemsPayload.MAX_ENTRIES / MAX_SOURCES)
+        for (PullItemsPayload.Entry entry : payload.entries()) {
+            ItemVariant variant = entry.variant();
+            if (variant.isBlank()) continue;
+
+            for (PullItemsPayload.Source source : entry.sources()) {
+                BlockPos sourcePos = source.pos();
+                if (source.count() <= 0) continue;
+                if (fromBlock && (sourcePos.equals(targetPos) || sourcePos.equals(targetPartner))) continue;
+                // canAccess covers both halves of a double chest
+                if (!PullValidator.canAccess(player, sourcePos, radius)) continue;
+
+                total += transfer(level, variant, source.count(), sourcePos, target, targetContainer);
             }
-            if (targetStorage == null) {
-                targetStorage = getStorage(null, null, player, true);
-            }
-
-            itemsTransferred += transferFromStorage(sourceStorage, targetStorage, item, count);
         }
-
-        if (sourceInventory != null || targetInventory != null) {
-            if (fromBlock && targetInventory instanceof Inventory) {
-                player.sendSystemMessage(Component.translatable("openitempuller.message.pull_to_target.error").withStyle(ChatFormatting.RED), true);
-            }
-            itemsTransferred += transferFromInventory(sourceInventory, targetInventory, item, count);
-        }
-
-        return itemsTransferred;
+        return new PullResult(total, false, fellBack);
     }
 
+    /**
+     * Moves up to {@code count} of {@code variant} from the container at {@code sourcePos} into {@code target}.
+     * <p>
+     * Everything goes through the Fabric Transfer API on purpose: it runs inside a transaction, honours
+     * {@code canPlaceItem} of the target and calls {@code setChanged()} on commit, so the chunk is marked
+     * for saving and comparators / furnaces see the change. Mutating the stacks by hand skipped all of that.
+     *
+     * @param targetContainer the vanilla container behind the target block, if any, to refuse moving a container into itself
+     */
+    private static int transfer(Level level, ItemVariant variant, int count, BlockPos sourcePos,
+                                Storage<ItemVariant> target, @Nullable Container targetContainer) {
+        Storage<ItemVariant> source = storageAt(level, sourcePos, EXTRACT_SIDE);
+        if (source == null) return 0;
+
+        if (targetContainer != null) {
+            // Both halves of a double chest resolve to the same inventory: nothing to move.
+            Container sourceContainer = HopperBlockEntity.getContainerAt(level, sourcePos);
+            if (sourceContainer != null && sourceContainer.equals(targetContainer)) return 0;
+        }
+        return transferFromStorage(source, target, variant, count);
+    }
+
+    /**
+     * The side items are taken from. Same as a hopper under the block: a furnace gives up its output (and empty
+     * buckets) but not its input or fuel, a brewing stand its potions, and so on. Vanilla containers that are
+     * not sided (chests, barrels, ...) ignore it.
+     */
+    public static final Direction EXTRACT_SIDE = Direction.DOWN;
+
+    /**
+     * The item storage of the container at {@code pos}. Vanilla containers are looked up through
+     * {@code getContainerAt} (so a double chest is one storage covering both halves, matching the counts shown
+     * in the GUI); anything else falls back to the Transfer API lookup.
+     *
+     * @param side the face to access it from; {@code null} ignores sided slot rules and only honours
+     *             {@code canPlaceItem}. Use {@link #EXTRACT_SIDE} when taking items out.
+     */
     @Nullable
-    public static Storage<ItemVariant> getStorage(@Nullable BlockPos pos, @Nullable Level world, @Nullable ServerPlayer player, boolean fallback) {
-        Storage<ItemVariant> storage = null;
-
-        if (pos != null && world != null) {
-            storage = ItemStorage.SIDED.find(world, pos, null);
-        }
-
-        if (storage == null && player != null && fallback) {
-            storage = PlayerInventoryStorage.of(player);
-            player.sendSystemMessage(Component.translatable("openitempuller.message.pull_to_target.error").withStyle(ChatFormatting.RED), true);
-        }
-
-        return storage;
+    public static Storage<ItemVariant> storageAt(Level level, BlockPos pos, @Nullable Direction side) {
+        Container container = HopperBlockEntity.getContainerAt(level, pos);
+        if (container != null) return ContainerStorage.of(container, side);
+        return ItemStorage.SIDED.find(level, pos, side);
     }
 
-    public static int transferFromInventory(Container source, Container target, Item item, int maxAmount) {
+    /**
+     * What can actually be taken out of the container at {@code pos}, per item variant: the one source of the
+     * counts shown in the GUI, so the list and {@link #transfer} agree (a furnace's input is not offered).
+     *
+     * @return {@code null} when there is no item storage at {@code pos}
+     */
+    @Nullable
+    public static Map<ItemVariant, Long> extractableTotals(Level level, BlockPos pos) {
+        // Sum in a Long so huge storages can't overflow while adding.
+        // A variant is the item plus its components, so enchanted / renamed / filled stacks stay separate.
+        Map<ItemVariant, Long> totals = new LinkedHashMap<>();
+
+        Container container = HopperBlockEntity.getContainerAt(level, pos);
+        if (container != null && !(container instanceof WorldlyContainer)) {
+            // Unsided containers allow taking from every slot: no need for a transaction per slot
+            for (int slot = 0; slot < container.getContainerSize(); slot++) {
+                var stack = container.getItem(slot);
+                if (stack.isEmpty()) continue;
+                totals.merge(ItemVariant.of(stack), (long) stack.getCount(), Long::sum);
+            }
+            return totals;
+        }
+
+        if (container == null && !BlockEntitySearchUtil.isValidBlockEntity(pos, level)) return null;
+        Storage<ItemVariant> storage = storageAt(level, pos, EXTRACT_SIDE);
+        if (storage == null) return null;
+        for (StorageView<ItemVariant> view : storage) {
+            if (view.isResourceBlank()) continue;
+            long amount = extractable(view);
+            if (amount > 0) totals.merge(view.getResource(), amount, Long::sum);
+        }
+        return totals;
+    }
+
+    /** What {@code view} would give up, found by really extracting inside a transaction that is rolled back. */
+    private static long extractable(StorageView<ItemVariant> view) {
+        try (Transaction transaction = Transaction.openOuter()) {
+            return view.extract(view.getResource(), view.getAmount(), transaction);
+        } // never committed: nothing changes
+    }
+
+    /** Moves exactly this variant (item and components), so enchanted / renamed / filled stacks are never mixed with plain ones. */
+    public static int transferFromStorage(Storage<ItemVariant> source, Storage<ItemVariant> target, ItemVariant variant, int maxAmount) {
         if (source == null || target == null) return 0;
-        int itemsTransferred = 0;
-
-        for (int j = 0; j < source.getContainerSize(); j++) {
-            ItemStack sourceStack = source.getItem(j);
-            if (!sourceStack.getItem().equals(item)) continue;
-
-            int transferAmount = Math.min(maxAmount - itemsTransferred, sourceStack.getCount());
-            if (transferAmount <= 0) continue;
-
-            ItemStack splitStack = sourceStack.split(transferAmount);
-
-            if (target instanceof Inventory playerInventory) {
-                // add() moves what fits; whatever does not fit goes back into the chest
-                playerInventory.add(splitStack);
-                int leftover = splitStack.getCount();
-                if (leftover > 0) {
-                    sourceStack.grow(leftover);
-                    itemsTransferred += transferAmount - leftover;
-                    break; // inventory is full
-                }
-                itemsTransferred += transferAmount;
-                continue;
-            }
-
-            for (int k = 0; k < target.getContainerSize(); k++) {
-                ItemStack existingStack = target.getItem(k);
-
-                if (!target.canTakeItem(target, k, splitStack)) continue;
-
-                if (existingStack.isEmpty()) {
-                    target.setItem(k, splitStack);
-                    itemsTransferred += splitStack.getCount();
-                    splitStack = ItemStack.EMPTY;
-                    break;
-                } else if (canStackAddMore(existingStack, splitStack, target)) {
-                    int availableSpace = existingStack.getMaxStackSize() - existingStack.getCount();
-                    int mergeAmount = Math.min(splitStack.getCount(), availableSpace);
-                    existingStack.grow(mergeAmount);
-                    splitStack.shrink(mergeAmount);
-                    itemsTransferred += mergeAmount;
-
-                    if (splitStack.isEmpty()) {
-                        break;
-                    }
-                }
-            }
-
-            if (!splitStack.isEmpty()) {
-                sourceStack.grow(splitStack.getCount());
-                break;
-            }
-
-            if (itemsTransferred >= maxAmount) break;
-        }
-        return itemsTransferred;
-    }
-
-    private static boolean canStackAddMore(ItemStack existingStack, ItemStack stack, Container container) {
-        return !existingStack.isEmpty() && ItemStack.isSameItemSameComponents(existingStack, stack)
-                && existingStack.isStackable() && existingStack.getCount() < container.getMaxStackSize(existingStack);
-    }
-
-    public static int transferFromStorage(Storage<ItemVariant> source, Storage<ItemVariant> target, Item item, int maxAmount) {
-        if (source == null || target == null) return 0;
-        return (int) StorageUtil.move(source, target, iv -> iv.getItem().equals(item), maxAmount, null);
+        return (int) StorageUtil.move(source, target, variant::equals, maxAmount, null);
     }
 }

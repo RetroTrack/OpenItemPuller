@@ -1,5 +1,7 @@
 package com.retrotrack.openitempuller.util;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ClipContext;
@@ -7,6 +9,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
+@Environment(EnvType.CLIENT)
 public class BlockRaycastHelper {
     public static BlockPos getBlockPlayerIsLookingAt(LocalPlayer player) {
         double reachDistance = 5.0;

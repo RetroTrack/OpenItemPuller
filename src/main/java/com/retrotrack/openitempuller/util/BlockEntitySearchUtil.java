@@ -2,16 +2,15 @@ package com.retrotrack.openitempuller.util;
 
 import com.retrotrack.openitempuller.util.decoding.DecodedBlockEntity;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
-import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunk;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -23,12 +22,6 @@ public class BlockEntitySearchUtil {
         return sortByDistance(findBlockEntitiesAroundPlayer(world, player, radius), player);
     }
 
-    public static BlockEntity isUnlocked(ServerPlayer player, BlockPos pos) {
-        BlockEntity blockEntity = player.level().getBlockEntity(pos);
-        if (blockEntity instanceof RandomizableContainerBlockEntity lootable && lootable.getLootTable() != null) return null;
-        return blockEntity;
-    }
-
     public static List<BlockEntity> findBlockEntitiesAroundPlayer(ServerLevel world, ServerPlayer player, int radius) {
         List<BlockEntity> list = new ArrayList<>();
 
@@ -38,19 +31,18 @@ public class BlockEntitySearchUtil {
         for (int dx = -chunkRadius; dx <= chunkRadius; dx++) {
             for (int dz = -chunkRadius; dz <= chunkRadius; dz++) {
                 ChunkPos chunkPos = new ChunkPos(playerChunkPos.x() + dx, playerChunkPos.z() + dz);
-                ChunkAccess chunk = world.getChunk(chunkPos.x(), chunkPos.z());
+                // getChunkNow only returns already-loaded chunks: never loads or generates anything
+                LevelChunk chunk = world.getChunkSource().getChunkNow(chunkPos.x(), chunkPos.z());
+                if (chunk == null) continue;
 
                 for (BlockPos blockPos : chunk.getBlockEntitiesPos()) {
+                    // one rule for every kind of block entity, including non-Container item storages
+                    if (!PullValidator.canAccess(player, blockPos, radius)) continue;
                     BlockEntity blockEntity = world.getBlockEntity(blockPos);
-                    if (blockEntity instanceof RandomizableContainerBlockEntity lootable) {
-                        if (player.blockPosition().distSqr(blockPos) <= radius * radius && lootable.getLootTable() == null) {
-                            addUnlessDoubleChestHalf(list, world, player, blockPos, blockEntity);
-                        }
-                    } else if (blockEntity instanceof Container) {
-                        if (player.blockPosition().distSqr(blockPos) <= radius * radius) {
-                            addUnlessDoubleChestHalf(list, world, player, blockPos, blockEntity);
-                        }
-                    } else if (isValidBlockEntity(blockPos, world)) {
+                    if (blockEntity == null) continue;
+                    if (blockEntity instanceof Container) {
+                        addUnlessDoubleChestHalf(list, world, player, blockPos, blockEntity);
+                    } else {
                         list.add(blockEntity);
                     }
                 }
@@ -77,8 +69,8 @@ public class BlockEntitySearchUtil {
         return blockPosList;
     }
 
-    public static ArrayList<DecodedBlockEntity> sortByItemCount(ArrayList<DecodedBlockEntity> decodedBlockEntities, Item item) {
-        decodedBlockEntities.sort(Comparator.comparingInt(chest -> -chest.items().getOrDefault(item, 0)));
+    public static ArrayList<DecodedBlockEntity> sortByItemCount(ArrayList<DecodedBlockEntity> decodedBlockEntities, ItemVariant variant) {
+        decodedBlockEntities.sort(Comparator.comparingInt(chest -> -chest.items().getOrDefault(variant, 0)));
         return decodedBlockEntities;
     }
 }

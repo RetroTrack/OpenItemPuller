@@ -1,8 +1,9 @@
 package com.retrotrack.openitempuller.event;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.retrotrack.openitempuller.ItemPuller;
-import com.retrotrack.openitempuller.config.ItemPullerConfig;
+import com.retrotrack.openitempuller.client.ItemPullerClient;
+import com.retrotrack.openitempuller.gui.screen.PullItemScreen;
+import com.retrotrack.openitempuller.networking.ClientNetworkUtil;
 import com.retrotrack.openitempuller.networking.payloads.CheckChestPayload;
 import com.retrotrack.openitempuller.util.BlockEntitySearchUtil;
 import com.retrotrack.openitempuller.util.BlockRaycastHelper;
@@ -10,11 +11,11 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
@@ -48,23 +49,25 @@ public class KeyInputHandler {
 
     private static void handleKeyInputTick(Minecraft client) {
         if (client.player == null) return;
-        // original behaviour: key is checked while held (isPressed -> isDown)
-        if (setTargetKey.isDown()) {
+        // consumeClick() returns true once per key press (not every tick while held),
+        // so holding Y/U/O can no longer spam chat messages or packets.
+        // The while loops also drain extra queued presses so they don't fire on a later tick.
+        boolean set = false, remove = false, open = false;
+        while (setTargetKey.consumeClick()) set = true;
+        while (removeTargetKey.consumeClick()) remove = true;
+        while (openPullScreenKey.consumeClick()) open = true;
+
+        if (set) {
             setTargetBlock(client);
-            return;
-        }
-        if (removeTargetKey.isDown()) {
+        } else if (remove) {
             removeTargetBlock(client);
-            return;
-        }
-        if (openPullScreenKey.isDown()) {
-            ClientPlayNetworking.send(new CheckChestPayload(ItemPuller.CONFIG.getInteger("radius")));
+        } else if (open && !(client.gui.screen() instanceof PullItemScreen)) {
+            ClientNetworkUtil.trySend(new CheckChestPayload(ItemPullerClient.config().radius()));
         }
     }
 
     private static void removeTargetBlock(Minecraft client) {
-        ItemPuller.CONFIG.putProperty("is_target_block", false);
-        ItemPullerConfig.saveConfig(ItemPuller.CONFIG, ItemPullerConfig.CONFIG_FILE);
+        ItemPullerClient.setTargetBlock(null);
         client.player.sendSystemMessage(Component.translatable("openitempuller.message.remove_target_block").withStyle(ChatFormatting.RED));
     }
 
@@ -72,9 +75,7 @@ public class KeyInputHandler {
         // Sets target to block player is currently looking at and turn on block targeting
         BlockPos blockPos = BlockRaycastHelper.getBlockPlayerIsLookingAt(client.player);
         if (client.level != null && blockPos != null && BlockEntitySearchUtil.isValidBlockEntity(blockPos, client.level)) {
-            ItemPuller.CONFIG.putProperty("target_block_pos", blockPos);
-            ItemPuller.CONFIG.putProperty("is_target_block", true);
-            ItemPullerConfig.saveConfig(ItemPuller.CONFIG, ItemPullerConfig.CONFIG_FILE);
+            ItemPullerClient.setTargetBlock(GlobalPos.of(client.level.dimension(), blockPos.immutable()));
 
             client.player.sendSystemMessage(Component.translatable("openitempuller.message.set_target_block.success", blockPos.toShortString()).withStyle(ChatFormatting.GREEN));
         }
